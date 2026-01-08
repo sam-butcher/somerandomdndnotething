@@ -17,8 +17,8 @@ import {
 import { QueryResponse } from '@typedb/driver-http';
 
 interface ContainmentEdge {
-  containerName: string;
-  containedName: string;
+  containerId: string;
+  containedId: string;
   containedType: string;
 }
 
@@ -56,7 +56,7 @@ export class TypeDBQueryService {
     if (!structure) return null;
 
     // Query 2: Get all entity attributes and abilities in one query
-    const entityDetails = await this.fetchAllEntityDetails(structure.entityNames);
+    const entityDetails = await this.fetchAllEntityDetails(structure.entityIds);
 
     // Build the dungeon graph from structure and details
     return this.buildDungeonFromStructure(structure, entityDetails);
@@ -68,9 +68,9 @@ export class TypeDBQueryService {
    */
   private async fetchDungeonStructure(dungeonId: string): Promise<{
     dungeon: { id: string; name: string; description?: string };
-    rooms: Array<{ name: string; description?: string }>;
+    rooms: Array<{ id: string; name: string; description?: string }>;
     containmentEdges: ContainmentEdge[];
-    entityNames: string[];
+    entityIds: string[];
   } | null> {
     const query = `
       match
@@ -87,8 +87,8 @@ export class TypeDBQueryService {
             let $parent, $contained in all_contents($room);
             $contained isa! $contained_type;
           fetch {
-            "container": $parent.name,
-            "contained": $contained.name,
+            "containerId": $parent.id,
+            "containedId": $contained.id,
             "type": $contained_type
           };
         ]
@@ -108,45 +108,46 @@ export class TypeDBQueryService {
       };
 
       const rooms = (result.rooms || []).map((r: any) => ({
+        id: r.id as string,
         name: r.name as string,
         description: r.description as string | undefined,
       }));
 
       const containmentEdges: ContainmentEdge[] = (result.containment || []).map((c: any) => ({
-        containerName: c.container as string,
-        containedName: c.contained as string,
+        containerId: c.containerId as string,
+        containedId: c.containedId as string,
         containedType: c.type.label as string,
       }));
 
-      // Extract all unique entity names
-      const entityNames = Array.from(
-        new Set(containmentEdges.map((edge) => edge.containedName))
+      // Extract all unique entity IDs
+      const entityIds = Array.from(
+        new Set(containmentEdges.map((edge) => edge.containedId))
       );
 
-      return { dungeon, rooms, containmentEdges, entityNames };
+      return { dungeon, rooms, containmentEdges, entityIds };
     });
   }
 
   /**
    * Query 2: Fetch all entity attributes and abilities in one query
-   * Uses 'or' pattern to match any entity name from the list
+   * Uses 'or' pattern to match any entity ID from the list
    */
-  private async fetchAllEntityDetails(entityNames: string[]): Promise<Map<string, EntityAttributes>> {
-    if (entityNames.length === 0) {
+  private async fetchAllEntityDetails(entityIds: string[]): Promise<Map<string, EntityAttributes>> {
+    if (entityIds.length === 0) {
       return new Map();
     }
 
-    // Build query with all entity names using 'or' pattern
-    const namePatterns = entityNames.map((name) => `$entity has name "${name}"`).join(';\n    } or {\n      ');
+    // Build query with all entity IDs using 'or' pattern
+    const idPatterns = entityIds.map((id) => `$entity has id "${id}"`).join(';\n    } or {\n      ');
 
     const query = `
       match
         $entity isa! $entity_type;
         {
-          ${namePatterns};
+          ${idPatterns};
         };
       fetch {
-        "name": $entity.name,
+        "id": $entity.id,
         "type": $entity_type,
         "attributes": { $entity.* },
         "abilities": [
@@ -170,7 +171,7 @@ export class TypeDBQueryService {
       }
 
       for (const result of response.answers as any[]) {
-        const name = result.name as string;
+        const id = result.id as string;
         const entityType = result.type.label as string;
         const attributes = result.attributes;
         const abilities = result.abilities || [];
@@ -191,7 +192,7 @@ export class TypeDBQueryService {
           abilityMap.get(abilityType)!.push(ability);
         }
 
-        entityMap.set(name, {
+        entityMap.set(id, {
           ...attributes,
           entityType,
           abilityMap,
@@ -208,24 +209,24 @@ export class TypeDBQueryService {
   private buildDungeonFromStructure(
     structure: {
       dungeon: { id: string; name: string; description?: string };
-      rooms: Array<{ name: string; description?: string }>;
+      rooms: Array<{ id: string; name: string; description?: string }>;
       containmentEdges: ContainmentEdge[];
-      entityNames: string[];
+      entityIds: string[];
     },
     entityDetails: Map<string, EntityAttributes>
   ): DungeonGraph {
-    // Build containment map: container name -> set of contained entity names
+    // Build containment map: container ID -> set of contained entity IDs
     const containmentMap = new Map<string, Set<string>>();
     for (const edge of structure.containmentEdges) {
-      if (!containmentMap.has(edge.containerName)) {
-        containmentMap.set(edge.containerName, new Set());
+      if (!containmentMap.has(edge.containerId)) {
+        containmentMap.set(edge.containerId, new Set());
       }
-      containmentMap.get(edge.containerName)!.add(edge.containedName);
+      containmentMap.get(edge.containerId)!.add(edge.containedId);
     }
 
     // Build rooms with their contents
     const rooms: RoomData[] = structure.rooms.map((roomData) =>
-      this.buildRoom(roomData.name, roomData.description, containmentMap, entityDetails)
+      this.buildRoom(roomData.id, roomData.name, roomData.description, containmentMap, entityDetails)
     );
 
     return {
@@ -237,19 +238,20 @@ export class TypeDBQueryService {
   }
 
   private buildRoom(
+    roomId: string,
     roomName: string,
     roomDescription: string | undefined,
     containmentMap: Map<string, Set<string>>,
     entityDetails: Map<string, EntityAttributes>
   ): RoomData {
-    const contained = containmentMap.get(roomName) || new Set<string>();
+    const contained = containmentMap.get(roomId) || new Set<string>();
 
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
 
-    for (const entityName of contained) {
-      const entityData = entityDetails.get(entityName);
+    for (const entityId of contained) {
+      const entityData = entityDetails.get(entityId);
       if (!entityData) continue;
 
       const entityType = entityData['entityType'];
@@ -262,7 +264,7 @@ export class TypeDBQueryService {
         if (item) items.push(item);
       } else if (entityType === 'box-container') {
         const container = this.buildContainer(
-          entityName,
+          entityId,
           entityData,
           containmentMap,
           entityDetails
@@ -281,19 +283,19 @@ export class TypeDBQueryService {
   }
 
   private buildContainer(
-    containerName: string,
+    containerId: string,
     containerData: EntityAttributes,
     containmentMap: Map<string, Set<string>>,
     entityDetails: Map<string, EntityAttributes>
   ): ContainerData | null {
-    const contained = containmentMap.get(containerName) || new Set<string>();
+    const contained = containmentMap.get(containerId) || new Set<string>();
 
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
 
-    for (const entityName of contained) {
-      const entityData = entityDetails.get(entityName);
+    for (const entityId of contained) {
+      const entityData = entityDetails.get(entityId);
       if (!entityData) continue;
 
       const entityType = entityData['entityType'];
@@ -306,7 +308,7 @@ export class TypeDBQueryService {
         if (item) items.push(item);
       } else if (entityType === 'box-container') {
         const nestedContainer = this.buildContainer(
-          entityName,
+          entityId,
           entityData,
           containmentMap,
           entityDetails
@@ -317,7 +319,7 @@ export class TypeDBQueryService {
 
     return {
       type: 'box-container',
-      name: containerName,
+      name: containerData['name'] as string,
       description: containerData['description'] as string | undefined,
       creatures,
       items,

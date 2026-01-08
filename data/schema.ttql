@@ -171,6 +171,7 @@ entity pc, sub creature;
 # ============================================================================
 
 entity containable @abstract,
+    owns id @key,
     plays containment:contained;
 
 entity container @abstract, sub containable,
