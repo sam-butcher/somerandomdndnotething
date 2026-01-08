@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { TypeDBHttpDriver, isOkResponse } from '@typedb/driver-http';
+import { QueryResponse, TypeDBHttpDriver, isOkResponse } from '@typedb/driver-http';
 import {
   TypeDBConnectionConfig,
   TypeDBConnectionStatus,
@@ -63,37 +63,24 @@ export class TypeDBConnectionService {
     this._connectionStatus.set({ connected: false });
   }
 
-  async executeReadQuery<T>(queryString: string, mapper: (response: any) => T): Promise<T> {
+  async executeReadQuery<T>(queryString: string, mapper: (response: QueryResponse) => T): Promise<T> {
     if (!this.driver || !this.config) {
       throw new Error('Not connected to TypeDB');
     }
 
-    const txResponse = await this.driver.openTransaction(this.config.database, 'read', {
-      transactionTimeoutMillis: 30000,
-    });
+    const queryResponse = await this.driver.oneShotQuery(
+      queryString,
+      false,
+      this.config.database,
+      'read',
+      { transactionTimeoutMillis: 30000 }
+    );
 
-    if (!isOkResponse(txResponse)) {
-      throw new Error('Failed to open transaction');
+    if (!isOkResponse(queryResponse)) {
+      throw new Error('Query failed');
     }
 
-    const transactionId = txResponse.ok.transactionId;
-
-    try {
-      const queryResponse = await this.driver.query(transactionId, queryString);
-
-      if (!isOkResponse(queryResponse)) {
-        throw new Error('Query failed');
-      }
-
-      const mappedResult = mapper(queryResponse.ok);
-
-      await this.driver.closeTransaction(transactionId);
-
-      return mappedResult;
-    } catch (error) {
-      await this.driver.closeTransaction(transactionId);
-      throw error;
-    }
+    return mapper(queryResponse.ok);
   }
 
   private saveConnectionPreferences(config: TypeDBConnectionConfig): void {

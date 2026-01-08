@@ -14,6 +14,7 @@ import {
   CreatureSize,
   CreatureType,
 } from '../models/dungeon.models';
+import { QueryResponse } from '@typedb/driver-http';
 
 @Injectable({
   providedIn: 'root',
@@ -25,20 +26,14 @@ export class TypeDBQueryService {
     const query = `
       match
         $d isa dungeon;
-      fetch {
-        "id": $d.id,
-        "name": $d.name
-      };
+      fetch { $d.* };
     `;
 
-    return this.connectionService.executeReadQuery(query, (response: any) => {
+    return this.connectionService.executeReadQuery(query, (response) => {
       if (response.answerType !== 'conceptDocuments') {
         return [];
       }
-      return response.answers.map((result: any) => ({
-        id: result.id[0].value as string,
-        name: result.name[0].value as string,
-      }));
+      return response.answers as DungeonSummary[];
     });
   }
 
@@ -56,6 +51,11 @@ export class TypeDBQueryService {
       roomsData.map((roomData) => this.buildRoom(roomData, containmentMap, entityMap))
     );
 
+    console.log('asdf1', roomsData);
+    console.log('asdf2', entityMap);
+    console.log('asdf3', containmentMap);
+    console.log('asdf4', rooms);
+
     return {
       id: dungeonData.id,
       name: dungeonData.name,
@@ -70,23 +70,14 @@ export class TypeDBQueryService {
     const query = `
       match
         $d isa dungeon, has id "${dungeonId}";
-      fetch {
-        "id": $d.id,
-        "name": $d.name,
-        "description": $d.description
-      };
+      fetch { $d.* };
     `;
 
     return this.connectionService.executeReadQuery(query, (response: any) => {
       if (response.answerType !== 'conceptDocuments' || response.answers.length === 0) {
         return null;
       }
-      const result = response.answers[0];
-      return {
-        id: result.id[0].value as string,
-        name: result.name[0].value as string,
-        description: result.description?.[0]?.value as string | undefined,
-      };
+      return response.answers[0];
     });
   }
 
@@ -96,20 +87,14 @@ export class TypeDBQueryService {
         $d isa dungeon, has id "${dungeonId}";
         $r($d) isa dungeon-composition;
         $r(room-in-dungeon: $room);
-      fetch {
-        "name": $room.name,
-        "description": $room.description
-      };
+      fetch { $room.* };
     `;
 
     return this.connectionService.executeReadQuery(query, (response: any) => {
       if (response.answerType !== 'conceptDocuments') {
         return [];
       }
-      return response.answers.map((result: any) => ({
-        name: result.name[0].value as string,
-        description: result.description?.[0]?.value as string | undefined,
-      }));
+      return response.answers;
     });
   }
 
@@ -123,7 +108,7 @@ export class TypeDBQueryService {
         $c(contained: $entity);
         $entity isa $entity-type;
       fetch {
-        "entity": $entity,
+        "entity": { $entity.* },
         "type": $entity-type
       };
     `;
@@ -136,7 +121,7 @@ export class TypeDBQueryService {
       for (const result of response.answers) {
         const entityData = result.entity;
         const entityType = result.type.label;
-        const entityName = entityData.name?.[0]?.value;
+        const entityName = entityData.name;
 
         if (entityName) {
           entityMap.set(entityName, {
@@ -204,7 +189,7 @@ export class TypeDBQueryService {
         return [];
       }
       return response.answers.map((result: any) => ({
-        name: result.name[0].value as string,
+        name: result.name as string,
         type: result.type.label as string,
       }));
     });
@@ -253,7 +238,7 @@ export class TypeDBQueryService {
     containmentMap: Map<string, Set<string>>,
     entityMap: Map<string, any>
   ): Promise<ContainerData | null> {
-    const containerName = containerData.name?.[0]?.value;
+    const containerName = containerData.name;
     if (!containerName) return null;
 
     const contained = containmentMap.get(containerName) || new Set<string>();
@@ -283,7 +268,7 @@ export class TypeDBQueryService {
     return {
       type: 'box-container',
       name: containerName,
-      description: containerData.description?.[0]?.value,
+      description: containerData.description,
       creatures,
       items,
       containers,
@@ -295,12 +280,12 @@ export class TypeDBQueryService {
     creatureName: string,
     entityType: string
   ): Promise<CreatureData | null> {
-    const name = entity.name?.[0]?.value as string;
-    const description = entity.description?.[0]?.value as string | undefined;
-    const level = entity.level?.[0]?.value as number | undefined;
-    const hitPoints = entity['hit-points']?.[0]?.value as number | undefined;
-    const armorClass = entity['armor-class']?.[0]?.value as number | undefined;
-    const alignment = entity.alignment?.[0]?.value as Alignment | undefined;
+    const name = entity.name as string;
+    const description = entity.description as string | undefined;
+    const level = entity.level as number | undefined;
+    const hitPoints = entity['hit-points'] as number | undefined;
+    const armorClass = entity['armor-class'] as number | undefined;
+    const alignment = entity.alignment as Alignment | undefined;
 
     const statblock = await this.buildStatblock(entity, creatureName);
 
@@ -316,7 +301,7 @@ export class TypeDBQueryService {
         statblock: statblock || undefined,
       };
     } else if (entityType === 'npc') {
-      const isFriendly = entity['is-friendly']?.[0]?.value as boolean | undefined;
+      const isFriendly = entity['is-friendly'] as boolean | undefined;
       return {
         type: 'npc',
         name,
@@ -344,12 +329,12 @@ export class TypeDBQueryService {
   }
 
   private parseItemFromEntity(entity: any, entityType: string): ItemData | null {
-    const name = entity.name?.[0]?.value as string;
-    const description = entity.description?.[0]?.value as string | undefined;
+    const name = entity.name;
+    const description = entity.description;
 
     if (entityType === 'magic-item') {
-      const rarity = entity.rarity?.[0]?.value as Rarity | undefined;
-      const requiresAttunement = entity['requires-attunement']?.[0]?.value as boolean | undefined;
+      const rarity = entity.rarity as Rarity | undefined;
+      const requiresAttunement = entity['requires-attunement'];
 
       return {
         type: 'magic-item',
@@ -392,58 +377,58 @@ export class TypeDBQueryService {
       return Array.isArray(value) ? value.map((v: any) => v.value as string) : [];
     };
 
-    const wisdom = entity.wisdom[0].value as number;
+    const wisdom = entity.wisdom as number;
     const passivePerception =
-      entity['passive-perception']?.[0]?.value || 10 + Math.floor((wisdom - 10) / 2);
+      entity['passive-perception'] || 10 + Math.floor((wisdom - 10) / 2);
 
     return {
       abilityScores: {
-        strength: entity.strength[0].value as number,
-        dexterity: entity.dexterity[0].value as number,
-        constitution: entity.constitution[0].value as number,
-        intelligence: entity.intelligence[0].value as number,
+        strength: entity.strength as number,
+        dexterity: entity.dexterity as number,
+        constitution: entity.constitution as number,
+        intelligence: entity.intelligence as number,
         wisdom: wisdom,
-        charisma: entity.charisma[0].value as number,
+        charisma: entity.charisma as number,
       },
-      size: entity.size[0].value as CreatureSize,
-      type: entity['creature-type'][0].value as CreatureType,
-      challengeRating: entity['challenge-rating']?.[0]?.value as string | undefined,
-      experiencePoints: entity['experience-points']?.[0]?.value as number | undefined,
-      proficiencyBonus: entity['proficiency-bonus']?.[0]?.value || 2,
+      size: entity.size as CreatureSize,
+      type: entity['creature-type'] as CreatureType,
+      challengeRating: entity['challenge-rating'] as string | undefined,
+      experiencePoints: entity['experience-points'] as number | undefined,
+      proficiencyBonus: entity['proficiency-bonus'] || 2,
       speed: {
-        walk: entity['speed-walk']?.[0]?.value as number | undefined,
-        fly: entity['speed-fly']?.[0]?.value as number | undefined,
-        swim: entity['speed-swim']?.[0]?.value as number | undefined,
-        burrow: entity['speed-burrow']?.[0]?.value as number | undefined,
-        climb: entity['speed-climb']?.[0]?.value as number | undefined,
+        walk: entity['speed-walk'] as number | undefined,
+        fly: entity['speed-fly'] as number | undefined,
+        swim: entity['speed-swim'] as number | undefined,
+        burrow: entity['speed-burrow'] as number | undefined,
+        climb: entity['speed-climb'] as number | undefined,
       },
       savingThrows: {
-        strength: entity['save-strength']?.[0]?.value as number | undefined,
-        dexterity: entity['save-dexterity']?.[0]?.value as number | undefined,
-        constitution: entity['save-constitution']?.[0]?.value as number | undefined,
-        intelligence: entity['save-intelligence']?.[0]?.value as number | undefined,
-        wisdom: entity['save-wisdom']?.[0]?.value as number | undefined,
-        charisma: entity['save-charisma']?.[0]?.value as number | undefined,
+        strength: entity['save-strength'] as number | undefined,
+        dexterity: entity['save-dexterity'] as number | undefined,
+        constitution: entity['save-constitution'] as number | undefined,
+        intelligence: entity['save-intelligence'] as number | undefined,
+        wisdom: entity['save-wisdom'] as number | undefined,
+        charisma: entity['save-charisma'] as number | undefined,
       },
       skills: {
-        acrobatics: entity['skill-acrobatics']?.[0]?.value as number | undefined,
-        animalHandling: entity['skill-animal-handling']?.[0]?.value as number | undefined,
-        arcana: entity['skill-arcana']?.[0]?.value as number | undefined,
-        athletics: entity['skill-athletics']?.[0]?.value as number | undefined,
-        deception: entity['skill-deception']?.[0]?.value as number | undefined,
-        history: entity['skill-history']?.[0]?.value as number | undefined,
-        insight: entity['skill-insight']?.[0]?.value as number | undefined,
-        intimidation: entity['skill-intimidation']?.[0]?.value as number | undefined,
-        investigation: entity['skill-investigation']?.[0]?.value as number | undefined,
-        medicine: entity['skill-medicine']?.[0]?.value as number | undefined,
-        nature: entity['skill-nature']?.[0]?.value as number | undefined,
-        perception: entity['skill-perception']?.[0]?.value as number | undefined,
-        performance: entity['skill-performance']?.[0]?.value as number | undefined,
-        persuasion: entity['skill-persuasion']?.[0]?.value as number | undefined,
-        religion: entity['skill-religion']?.[0]?.value as number | undefined,
-        sleightOfHand: entity['skill-sleight-of-hand']?.[0]?.value as number | undefined,
-        stealth: entity['skill-stealth']?.[0]?.value as number | undefined,
-        survival: entity['skill-survival']?.[0]?.value as number | undefined,
+        acrobatics: entity['skill-acrobatics'] as number | undefined,
+        animalHandling: entity['skill-animal-handling'] as number | undefined,
+        arcana: entity['skill-arcana'] as number | undefined,
+        athletics: entity['skill-athletics'] as number | undefined,
+        deception: entity['skill-deception'] as number | undefined,
+        history: entity['skill-history'] as number | undefined,
+        insight: entity['skill-insight'] as number | undefined,
+        intimidation: entity['skill-intimidation'] as number | undefined,
+        investigation: entity['skill-investigation'] as number | undefined,
+        medicine: entity['skill-medicine'] as number | undefined,
+        nature: entity['skill-nature'] as number | undefined,
+        perception: entity['skill-perception'] as number | undefined,
+        performance: entity['skill-performance'] as number | undefined,
+        persuasion: entity['skill-persuasion'] as number | undefined,
+        religion: entity['skill-religion'] as number | undefined,
+        sleightOfHand: entity['skill-sleight-of-hand'] as number | undefined,
+        stealth: entity['skill-stealth'] as number | undefined,
+        survival: entity['skill-survival'] as number | undefined,
       },
       damageResistances: parseListAttribute('damage-resistance'),
       damageImmunities: parseListAttribute('damage-immunity'),
@@ -472,7 +457,7 @@ export class TypeDBQueryService {
         $r(ability: $a);
         $a isa $ability-type;
       fetch {
-        "ability": $a,
+        "ability": { $a.* },
         "type": $ability-type
       };
     `;
@@ -489,9 +474,9 @@ export class TypeDBQueryService {
         const abilityData = result.ability;
 
         const ability: CreatureAbility = {
-          name: abilityData.name[0].value as string,
-          description: abilityData.description[0].value as string,
-          actionCost: abilityData['action-cost']?.[0]?.value as number | undefined,
+          name: abilityData.name as string,
+          description: abilityData.description as string,
+          actionCost: abilityData['action-cost'] as number | undefined,
         };
 
         if (!abilityMap.has(abilityType)) {
