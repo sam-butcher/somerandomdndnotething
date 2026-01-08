@@ -33,6 +33,70 @@ attribute rarity, value string @values(
     "Artifact"
 );
 
+# Ability Scores
+attribute strength, value integer;
+attribute dexterity, value integer;
+attribute constitution, value integer;
+attribute intelligence, value integer;
+attribute wisdom, value integer;
+attribute charisma, value integer;
+
+# Combat Stats
+attribute challenge-rating, value string;
+attribute experience-points, value integer;
+attribute proficiency-bonus, value integer;
+attribute passive-perception, value integer;
+
+# Speed (in feet)
+attribute speed-walk, value integer;
+attribute speed-fly, value integer;
+attribute speed-swim, value integer;
+attribute speed-burrow, value integer;
+attribute speed-climb, value integer;
+
+# Creature Details
+attribute size, value string @values("Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan");
+attribute creature-type, value string @values("Aberration", "Beast", "Celestial", "Construct", "Dragon", "Elemental", "Fey", "Fiend", "Giant", "Humanoid", "Monstrosity", "Ooze", "Plant", "Undead");
+
+# Lists (comma-separated strings)
+attribute damage-resistances, value string;
+attribute damage-immunities, value string;
+attribute condition-immunities, value string;
+attribute damage-vulnerabilities, value string;
+attribute languages, value string;
+attribute senses, value string;
+
+# Saving Throws
+attribute save-strength, value integer;
+attribute save-dexterity, value integer;
+attribute save-constitution, value integer;
+attribute save-intelligence, value integer;
+attribute save-wisdom, value integer;
+attribute save-charisma, value integer;
+
+# Skills
+attribute skill-acrobatics, value integer;
+attribute skill-animal-handling, value integer;
+attribute skill-arcana, value integer;
+attribute skill-athletics, value integer;
+attribute skill-deception, value integer;
+attribute skill-history, value integer;
+attribute skill-insight, value integer;
+attribute skill-intimidation, value integer;
+attribute skill-investigation, value integer;
+attribute skill-medicine, value integer;
+attribute skill-nature, value integer;
+attribute skill-perception, value integer;
+attribute skill-performance, value integer;
+attribute skill-persuasion, value integer;
+attribute skill-religion, value integer;
+attribute skill-sleight-of-hand, value integer;
+attribute skill-stealth, value integer;
+attribute skill-survival, value integer;
+
+# Action cost for legendary actions
+attribute action-cost, value integer;
+
 # ============================================================================
 # Entity Types - Creatures
 # ============================================================================
@@ -44,7 +108,56 @@ entity creature @abstract,
     owns hit-points,
     owns armor-class,
     owns alignment,
-    plays containment:contained;
+    # New statblock attributes (Monster/NPC only will use these)
+    owns strength,
+    owns dexterity,
+    owns constitution,
+    owns intelligence,
+    owns wisdom,
+    owns charisma,
+    owns challenge-rating,
+    owns experience-points,
+    owns proficiency-bonus,
+    owns passive-perception,
+    owns speed-walk,
+    owns speed-fly,
+    owns speed-swim,
+    owns speed-burrow,
+    owns speed-climb,
+    owns size,
+    owns creature-type,
+    owns damage-resistances,
+    owns damage-immunities,
+    owns condition-immunities,
+    owns damage-vulnerabilities,
+    owns languages,
+    owns senses,
+    owns save-strength,
+    owns save-dexterity,
+    owns save-constitution,
+    owns save-intelligence,
+    owns save-wisdom,
+    owns save-charisma,
+    owns skill-acrobatics,
+    owns skill-animal-handling,
+    owns skill-arcana,
+    owns skill-athletics,
+    owns skill-deception,
+    owns skill-history,
+    owns skill-insight,
+    owns skill-intimidation,
+    owns skill-investigation,
+    owns skill-medicine,
+    owns skill-nature,
+    owns skill-perception,
+    owns skill-performance,
+    owns skill-persuasion,
+    owns skill-religion,
+    owns skill-sleight-of-hand,
+    owns skill-stealth,
+    owns skill-survival,
+    plays containment:contained,
+    plays has-ability:creature;
 
 entity monster, sub creature;
 
@@ -88,6 +201,24 @@ entity magic-item, sub item,
     owns rarity;
 
 # ============================================================================
+# Entity Types - Creature Abilities
+# ============================================================================
+
+entity creature-ability @abstract,
+    owns name,
+    owns description,
+    plays has-ability:ability;
+
+entity trait, sub creature-ability;
+entity action, sub creature-ability;
+entity bonus-action, sub creature-ability;
+entity reaction, sub creature-ability;
+entity legendary-action, sub creature-ability,
+    owns action-cost;
+entity lair-action, sub creature-ability;
+entity mythic-action, sub creature-ability;
+
+# ============================================================================
 # Relation Types
 # ============================================================================
 
@@ -98,3 +229,7 @@ relation containment,
 relation dungeon-composition,
     relates dungeon,
     relates room-in-dungeon;
+
+relation has-ability,
+    relates creature,
+    relates ability;

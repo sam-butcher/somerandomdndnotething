@@ -118,25 +118,38 @@
                             @if (creature.description) {
                               <p class="creature-description">{{ creature.description }}</p>
                             }
-                            <div class="creature-stats">
-                              @if (creature.level) {
-                                <span class="stat">Level: {{ creature.level }}</span>
-                              }
-                              @if (creature.hitPoints) {
-                                <span class="stat">HP: {{ creature.hitPoints }}</span>
-                              }
-                              @if (creature.armorClass) {
-                                <span class="stat">AC: {{ creature.armorClass }}</span>
-                              }
-                              @if (creature.alignment) {
-                                <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
-                              }
-                              @if (creature.type === 'npc' && creature.isFriendly !== null) {
-                                <span class="stat" [class.friendly]="creature.isFriendly">
-                                  {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
-                                </span>
-                              }
-                            </div>
+
+                            @if ((creature.type === 'monster' || creature.type === 'npc') && creature.statblock) {
+                              <!-- Full statblock display -->
+                              <app-creature-statblock
+                                [statblock]="creature.statblock"
+                                [creatureName]="creature.name"
+                                [hitPoints]="creature.hitPoints"
+                                [armorClass]="creature.armorClass"
+                                [alignment]="creature.alignment"
+                              />
+                            } @else {
+                              <!-- Simple stats display (PC or creatures without statblock) -->
+                              <div class="creature-stats">
+                                @if (creature.level) {
+                                  <span class="stat">Level: {{ creature.level }}</span>
+                                }
+                                @if (creature.hitPoints) {
+                                  <span class="stat">HP: {{ creature.hitPoints }}</span>
+                                }
+                                @if (creature.armorClass) {
+                                  <span class="stat">AC: {{ creature.armorClass }}</span>
+                                }
+                                @if (creature.alignment) {
+                                  <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
+                                }
+                                @if (creature.type === 'npc' && creature.isFriendly !== null) {
+                                  <span class="stat" [class.friendly]="creature.isFriendly">
+                                    {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
+                                  </span>
+                                }
+                              </div>
+                            }
                           </div>
                         </div>
                       }
@@ -204,25 +217,38 @@
                                       @if (creature.description) {
                                         <p class="creature-description">{{ creature.description }}</p>
                                       }
-                                      <div class="creature-stats">
-                                        @if (creature.level) {
-                                          <span class="stat">Level: {{ creature.level }}</span>
-                                        }
-                                        @if (creature.hitPoints) {
-                                          <span class="stat">HP: {{ creature.hitPoints }}</span>
-                                        }
-                                        @if (creature.armorClass) {
-                                          <span class="stat">AC: {{ creature.armorClass }}</span>
-                                        }
-                                        @if (creature.alignment) {
-                                          <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
-                                        }
-                                        @if (creature.type === 'npc' && creature.isFriendly !== null) {
-                                          <span class="stat" [class.friendly]="creature.isFriendly">
-                                            {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
-                                          </span>
-                                        }
-                                      </div>
+
+                                      @if ((creature.type === 'monster' || creature.type === 'npc') && creature.statblock) {
+                                        <!-- Full statblock display -->
+                                        <app-creature-statblock
+                                          [statblock]="creature.statblock"
+                                          [creatureName]="creature.name"
+                                          [hitPoints]="creature.hitPoints"
+                                          [armorClass]="creature.armorClass"
+                                          [alignment]="creature.alignment"
+                                        />
+                                      } @else {
+                                        <!-- Simple stats display (PC or creatures without statblock) -->
+                                        <div class="creature-stats">
+                                          @if (creature.level) {
+                                            <span class="stat">Level: {{ creature.level }}</span>
+                                          }
+                                          @if (creature.hitPoints) {
+                                            <span class="stat">HP: {{ creature.hitPoints }}</span>
+                                          }
+                                          @if (creature.armorClass) {
+                                            <span class="stat">AC: {{ creature.armorClass }}</span>
+                                          }
+                                          @if (creature.alignment) {
+                                            <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
+                                          }
+                                          @if (creature.type === 'npc' && creature.isFriendly !== null) {
+                                            <span class="stat" [class.friendly]="creature.isFriendly">
+                                              {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
+                                            </span>
+                                          }
+                                        </div>
+                                      }
                                     </div>
                                   </div>
                                 }

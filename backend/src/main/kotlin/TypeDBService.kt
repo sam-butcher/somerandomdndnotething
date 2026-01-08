@@ -212,17 +212,134 @@ class TypeDBService(
         val rooms = roomsResults.map { roomResult ->
             val roomJson = Json.parseToJsonElement(roomResult.toString()).jsonObject
             val roomName = roomJson["name"]?.jsonPrimitive?.contentOrNull ?: ""
-            buildRoom(roomName, roomJson, containmentMap, entityMap)
+            buildRoom(roomName, roomJson, containmentMap, entityMap, tx)
         }
 
         return DungeonGraph(dungeonIdValue, dungeonNameValue, dungeonDescription, rooms)
+    }
+
+    private fun queryCreatureAbilities(tx: Transaction, creatureName: String): Map<String, List<CreatureAbility>> {
+        val query = $$"""
+            match
+                $c isa creature, has name "$$creatureName";
+                (creature: $c, ability: $a) isa has-ability;
+                $a isa! $ability-type;
+            fetch {
+                "ability": { $a.* },
+                "type": $ability-type
+            };
+        """.trimIndent()
+
+        val answer = tx.query(query).resolve()
+        val results = answer.asConceptDocuments().stream().toList()
+
+        val abilityMap = mutableMapOf<String, MutableList<CreatureAbility>>()
+
+        results.forEach { result ->
+            val json = Json.parseToJsonElement(result.toString()).jsonObject
+            val abilityJson = json["ability"]?.jsonObject
+            val type = json["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull
+
+            if (abilityJson != null && type != null) {
+                val ability = CreatureAbility(
+                    name = abilityJson["name"]?.jsonPrimitive?.contentOrNull ?: "",
+                    description = abilityJson["description"]?.jsonPrimitive?.contentOrNull ?: "",
+                    actionCost = abilityJson["action-cost"]?.jsonPrimitive?.longOrNull
+                )
+
+                abilityMap.getOrPut(type) { mutableListOf() }.add(ability)
+            }
+        }
+
+        return abilityMap
+    }
+
+    private fun buildStatblock(tx: Transaction, entity: JsonObject, creatureName: String): StatblockData? {
+        // Check required fields
+        val str = entity["strength"]?.jsonPrimitive?.longOrNull ?: return null
+        val dex = entity["dexterity"]?.jsonPrimitive?.longOrNull ?: return null
+        val con = entity["constitution"]?.jsonPrimitive?.longOrNull ?: return null
+        val int = entity["intelligence"]?.jsonPrimitive?.longOrNull ?: return null
+        val wis = entity["wisdom"]?.jsonPrimitive?.longOrNull ?: return null
+        val cha = entity["charisma"]?.jsonPrimitive?.longOrNull ?: return null
+
+        val size = CreatureSize.fromString(entity["size"]?.jsonPrimitive?.contentOrNull) ?: return null
+        val type = CreatureType.fromString(entity["creature-type"]?.jsonPrimitive?.contentOrNull) ?: return null
+
+        val profBonus = entity["proficiency-bonus"]?.jsonPrimitive?.longOrNull ?: 2
+        val passivePerception = entity["passive-perception"]?.jsonPrimitive?.longOrNull ?: (10 + (wis - 10) / 2)
+
+        // Parse comma-separated lists
+        fun parseList(value: String?): List<String> =
+            value?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+
+        val abilityMap = queryCreatureAbilities(tx, creatureName)
+
+        return StatblockData(
+            abilityScores = AbilityScores(str, dex, con, int, wis, cha),
+            size = size,
+            type = type,
+            challengeRating = entity["challenge-rating"]?.jsonPrimitive?.contentOrNull,
+            experiencePoints = entity["experience-points"]?.jsonPrimitive?.longOrNull,
+            proficiencyBonus = profBonus,
+            speed = SpeedData(
+                walk = entity["speed-walk"]?.jsonPrimitive?.longOrNull,
+                fly = entity["speed-fly"]?.jsonPrimitive?.longOrNull,
+                swim = entity["speed-swim"]?.jsonPrimitive?.longOrNull,
+                burrow = entity["speed-burrow"]?.jsonPrimitive?.longOrNull,
+                climb = entity["speed-climb"]?.jsonPrimitive?.longOrNull
+            ),
+            savingThrows = SavingThrows(
+                strength = entity["save-strength"]?.jsonPrimitive?.longOrNull,
+                dexterity = entity["save-dexterity"]?.jsonPrimitive?.longOrNull,
+                constitution = entity["save-constitution"]?.jsonPrimitive?.longOrNull,
+                intelligence = entity["save-intelligence"]?.jsonPrimitive?.longOrNull,
+                wisdom = entity["save-wisdom"]?.jsonPrimitive?.longOrNull,
+                charisma = entity["save-charisma"]?.jsonPrimitive?.longOrNull
+            ),
+            skills = Skills(
+                acrobatics = entity["skill-acrobatics"]?.jsonPrimitive?.longOrNull,
+                animalHandling = entity["skill-animal-handling"]?.jsonPrimitive?.longOrNull,
+                arcana = entity["skill-arcana"]?.jsonPrimitive?.longOrNull,
+                athletics = entity["skill-athletics"]?.jsonPrimitive?.longOrNull,
+                deception = entity["skill-deception"]?.jsonPrimitive?.longOrNull,
+                history = entity["skill-history"]?.jsonPrimitive?.longOrNull,
+                insight = entity["skill-insight"]?.jsonPrimitive?.longOrNull,
+                intimidation = entity["skill-intimidation"]?.jsonPrimitive?.longOrNull,
+                investigation = entity["skill-investigation"]?.jsonPrimitive?.longOrNull,
+                medicine = entity["skill-medicine"]?.jsonPrimitive?.longOrNull,
+                nature = entity["skill-nature"]?.jsonPrimitive?.longOrNull,
+                perception = entity["skill-perception"]?.jsonPrimitive?.longOrNull,
+                performance = entity["skill-performance"]?.jsonPrimitive?.longOrNull,
+                persuasion = entity["skill-persuasion"]?.jsonPrimitive?.longOrNull,
+                religion = entity["skill-religion"]?.jsonPrimitive?.longOrNull,
+                sleightOfHand = entity["skill-sleight-of-hand"]?.jsonPrimitive?.longOrNull,
+                stealth = entity["skill-stealth"]?.jsonPrimitive?.longOrNull,
+                survival = entity["skill-survival"]?.jsonPrimitive?.longOrNull
+            ),
+            damageResistances = parseList(entity["damage-resistances"]?.jsonPrimitive?.contentOrNull),
+            damageImmunities = parseList(entity["damage-immunities"]?.jsonPrimitive?.contentOrNull),
+            conditionImmunities = parseList(entity["condition-immunities"]?.jsonPrimitive?.contentOrNull),
+            damageVulnerabilities = parseList(entity["damage-vulnerabilities"]?.jsonPrimitive?.contentOrNull),
+            senses = parseList(entity["senses"]?.jsonPrimitive?.contentOrNull),
+            languages = parseList(entity["languages"]?.jsonPrimitive?.contentOrNull),
+            passivePerception = passivePerception,
+            traits = abilityMap["trait"] ?: emptyList(),
+            actions = abilityMap["action"] ?: emptyList(),
+            bonusActions = abilityMap["bonus-action"] ?: emptyList(),
+            reactions = abilityMap["reaction"] ?: emptyList(),
+            legendaryActions = abilityMap["legendary-action"] ?: emptyList(),
+            lairActions = abilityMap["lair-action"] ?: emptyList(),
+            mythicActions = abilityMap["mythic-action"] ?: emptyList()
+        )
     }
 
     private fun buildRoom(
         roomName: String,
         roomJson: JsonObject,
         containmentMap: Map<String, Set<String>>,
-        entityMap: Map<String, JsonObject>
+        entityMap: Map<String, JsonObject>,
+        tx: Transaction
     ): RoomData {
         val description = roomJson["description"]?.jsonPrimitive?.contentOrNull
 
@@ -240,13 +357,13 @@ class TypeDBService(
 
                 when (type) {
                     in setOf("monster", "npc", "pc") -> {
-                        if (entity != null) creatures.add(parseCreatureFromEntity(entity, type))
+                        if (entity != null) creatures.add(parseCreatureFromEntity(entity, type, tx))
                     }
                     in setOf("item", "magic-item") -> {
                         if (entity != null) items.add(parseItemFromEntity(entity, type))
                     }
                     "box-container" -> {
-                        if (entity != null) containers.add(buildContainer(containedName, entity, containmentMap, entityMap))
+                        if (entity != null) containers.add(buildContainer(containedName, entity, containmentMap, entityMap, tx))
                     }
                 }
             }
@@ -259,7 +376,8 @@ class TypeDBService(
         containerName: String,
         containerJson: JsonObject,
         containmentMap: Map<String, Set<String>>,
-        entityMap: Map<String, JsonObject>
+        entityMap: Map<String, JsonObject>,
+        tx: Transaction
     ): ContainerData {
         val description = containerJson["description"]?.jsonPrimitive?.contentOrNull
 
@@ -277,14 +395,14 @@ class TypeDBService(
 
                 when (type) {
                     in setOf("monster", "npc", "pc") -> {
-                        if (entity != null) creatures.add(parseCreatureFromEntity(entity, type))
+                        if (entity != null) creatures.add(parseCreatureFromEntity(entity, type, tx))
                     }
                     in setOf("item", "magic-item") -> {
                         if (entity != null) items.add(parseItemFromEntity(entity, type))
                     }
                     "box-container" -> {
                         // Recursive call for nested containers
-                        if (entity != null) nestedContainers.add(buildContainer(containedName, entity, containmentMap, entityMap))
+                        if (entity != null) nestedContainers.add(buildContainer(containedName, entity, containmentMap, entityMap, tx))
                     }
                 }
             }
@@ -293,7 +411,7 @@ class TypeDBService(
         return ContainerData.BoxContainer(containerName, description, items, creatures, nestedContainers)
     }
 
-    private fun parseCreatureFromEntity(entity: JsonObject, type: String): CreatureData {
+    private fun parseCreatureFromEntity(entity: JsonObject, type: String, tx: Transaction): CreatureData {
         val name = entity["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = entity["description"]?.jsonPrimitive?.contentOrNull
         val level = entity["level"]?.jsonPrimitive?.longOrNull
@@ -303,11 +421,16 @@ class TypeDBService(
         val alignment = Alignment.fromString(alignmentStr)
         val isFriendly = entity["is-friendly"]?.jsonPrimitive?.booleanOrNull
 
+        // Build statblock for Monster and NPC only
+        val statblock = if (type == "monster" || type == "npc") {
+            buildStatblock(tx, entity, name)
+        } else null
+
         return when (type) {
-            "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment)
-            "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, alignment, isFriendly)
+            "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment, statblock)
+            "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, alignment, isFriendly, statblock)
             "pc" -> CreatureData.PC(name, description, level, hitPoints, armorClass, alignment)
-            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment)
+            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment, statblock)
         }
     }
 

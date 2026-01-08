@@ -22,6 +22,111 @@ export enum Rarity {
   ARTIFACT = 'Artifact'
 }
 
+export enum CreatureSize {
+  TINY = 'Tiny',
+  SMALL = 'Small',
+  MEDIUM = 'Medium',
+  LARGE = 'Large',
+  HUGE = 'Huge',
+  GARGANTUAN = 'Gargantuan'
+}
+
+export enum CreatureType {
+  ABERRATION = 'Aberration',
+  BEAST = 'Beast',
+  CELESTIAL = 'Celestial',
+  CONSTRUCT = 'Construct',
+  DRAGON = 'Dragon',
+  ELEMENTAL = 'Elemental',
+  FEY = 'Fey',
+  FIEND = 'Fiend',
+  GIANT = 'Giant',
+  HUMANOID = 'Humanoid',
+  MONSTROSITY = 'Monstrosity',
+  OOZE = 'Ooze',
+  PLANT = 'Plant',
+  UNDEAD = 'Undead'
+}
+
+export interface AbilityScores {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+}
+
+export interface SpeedData {
+  walk?: number;
+  fly?: number;
+  swim?: number;
+  burrow?: number;
+  climb?: number;
+}
+
+export interface SavingThrows {
+  strength?: number;
+  dexterity?: number;
+  constitution?: number;
+  intelligence?: number;
+  wisdom?: number;
+  charisma?: number;
+}
+
+export interface Skills {
+  acrobatics?: number;
+  animalHandling?: number;
+  arcana?: number;
+  athletics?: number;
+  deception?: number;
+  history?: number;
+  insight?: number;
+  intimidation?: number;
+  investigation?: number;
+  medicine?: number;
+  nature?: number;
+  perception?: number;
+  performance?: number;
+  persuasion?: number;
+  religion?: number;
+  sleightOfHand?: number;
+  stealth?: number;
+  survival?: number;
+}
+
+export interface CreatureAbility {
+  name: string;
+  description: string;
+  actionCost?: number;
+}
+
+export interface StatblockData {
+  abilityScores: AbilityScores;
+  size: CreatureSize;
+  type: CreatureType;
+  challengeRating?: string;
+  experiencePoints?: number;
+  proficiencyBonus: number;
+  speed: SpeedData;
+  savingThrows?: SavingThrows;
+  skills?: Skills;
+  damageResistances: string[];
+  damageImmunities: string[];
+  conditionImmunities: string[];
+  damageVulnerabilities: string[];
+  senses: string[];
+  languages: string[];
+  passivePerception: number;
+  traits: CreatureAbility[];
+  actions: CreatureAbility[];
+  bonusActions: CreatureAbility[];
+  reactions: CreatureAbility[];
+  legendaryActions: CreatureAbility[];
+  lairActions: CreatureAbility[];
+  mythicActions: CreatureAbility[];
+}
+
 export interface DungeonSummary {
   id: string;
   name: string;
@@ -54,6 +159,7 @@ export interface Monster {
   hitPoints?: number;
   armorClass?: number;
   alignment?: Alignment;
+  statblock?: StatblockData;
 }
 
 export interface NPC {
@@ -65,6 +171,7 @@ export interface NPC {
   armorClass?: number;
   alignment?: Alignment;
   isFriendly?: boolean;
+  statblock?: StatblockData;
 }
 
 export interface PC {

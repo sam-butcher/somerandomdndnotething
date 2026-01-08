@@ -60,6 +60,151 @@ enum class Rarity {
 }
 
 @Serializable
+enum class CreatureSize {
+    @SerialName("Tiny") TINY,
+    @SerialName("Small") SMALL,
+    @SerialName("Medium") MEDIUM,
+    @SerialName("Large") LARGE,
+    @SerialName("Huge") HUGE,
+    @SerialName("Gargantuan") GARGANTUAN;
+
+    companion object {
+        fun fromString(value: String?): CreatureSize? = when (value) {
+            "Tiny" -> TINY
+            "Small" -> SMALL
+            "Medium" -> MEDIUM
+            "Large" -> LARGE
+            "Huge" -> HUGE
+            "Gargantuan" -> GARGANTUAN
+            else -> null
+        }
+    }
+}
+
+@Serializable
+enum class CreatureType {
+    @SerialName("Aberration") ABERRATION,
+    @SerialName("Beast") BEAST,
+    @SerialName("Celestial") CELESTIAL,
+    @SerialName("Construct") CONSTRUCT,
+    @SerialName("Dragon") DRAGON,
+    @SerialName("Elemental") ELEMENTAL,
+    @SerialName("Fey") FEY,
+    @SerialName("Fiend") FIEND,
+    @SerialName("Giant") GIANT,
+    @SerialName("Humanoid") HUMANOID,
+    @SerialName("Monstrosity") MONSTROSITY,
+    @SerialName("Ooze") OOZE,
+    @SerialName("Plant") PLANT,
+    @SerialName("Undead") UNDEAD;
+
+    companion object {
+        fun fromString(value: String?): CreatureType? = when (value) {
+            "Aberration" -> ABERRATION
+            "Beast" -> BEAST
+            "Celestial" -> CELESTIAL
+            "Construct" -> CONSTRUCT
+            "Dragon" -> DRAGON
+            "Elemental" -> ELEMENTAL
+            "Fey" -> FEY
+            "Fiend" -> FIEND
+            "Giant" -> GIANT
+            "Humanoid" -> HUMANOID
+            "Monstrosity" -> MONSTROSITY
+            "Ooze" -> OOZE
+            "Plant" -> PLANT
+            "Undead" -> UNDEAD
+            else -> null
+        }
+    }
+}
+
+@Serializable
+data class AbilityScores(
+    val strength: Long,
+    val dexterity: Long,
+    val constitution: Long,
+    val intelligence: Long,
+    val wisdom: Long,
+    val charisma: Long
+)
+
+@Serializable
+data class SpeedData(
+    val walk: Long? = null,
+    val fly: Long? = null,
+    val swim: Long? = null,
+    val burrow: Long? = null,
+    val climb: Long? = null
+)
+
+@Serializable
+data class SavingThrows(
+    val strength: Long? = null,
+    val dexterity: Long? = null,
+    val constitution: Long? = null,
+    val intelligence: Long? = null,
+    val wisdom: Long? = null,
+    val charisma: Long? = null
+)
+
+@Serializable
+data class Skills(
+    val acrobatics: Long? = null,
+    val animalHandling: Long? = null,
+    val arcana: Long? = null,
+    val athletics: Long? = null,
+    val deception: Long? = null,
+    val history: Long? = null,
+    val insight: Long? = null,
+    val intimidation: Long? = null,
+    val investigation: Long? = null,
+    val medicine: Long? = null,
+    val nature: Long? = null,
+    val perception: Long? = null,
+    val performance: Long? = null,
+    val persuasion: Long? = null,
+    val religion: Long? = null,
+    val sleightOfHand: Long? = null,
+    val stealth: Long? = null,
+    val survival: Long? = null
+)
+
+@Serializable
+data class CreatureAbility(
+    val name: String,
+    val description: String,
+    val actionCost: Long? = null
+)
+
+@Serializable
+data class StatblockData(
+    val abilityScores: AbilityScores,
+    val size: CreatureSize,
+    val type: CreatureType,
+    val challengeRating: String? = null,
+    val experiencePoints: Long? = null,
+    val proficiencyBonus: Long,
+    val speed: SpeedData,
+    val savingThrows: SavingThrows? = null,
+    val skills: Skills? = null,
+    val damageResistances: List<String> = emptyList(),
+    val damageImmunities: List<String> = emptyList(),
+    val conditionImmunities: List<String> = emptyList(),
+    val damageVulnerabilities: List<String> = emptyList(),
+    val senses: List<String> = emptyList(),
+    val languages: List<String> = emptyList(),
+    val passivePerception: Long,
+    val traits: List<CreatureAbility> = emptyList(),
+    val actions: List<CreatureAbility> = emptyList(),
+    val bonusActions: List<CreatureAbility> = emptyList(),
+    val reactions: List<CreatureAbility> = emptyList(),
+    val legendaryActions: List<CreatureAbility> = emptyList(),
+    val lairActions: List<CreatureAbility> = emptyList(),
+    val mythicActions: List<CreatureAbility> = emptyList()
+)
+
+@Serializable
 data class DungeonGraph(
     val id: String,
     val name: String,
@@ -100,7 +245,8 @@ sealed class CreatureData {
         override val level: Long? = null,
         override val hitPoints: Long? = null,
         override val armorClass: Long? = null,
-        override val alignment: Alignment? = null
+        override val alignment: Alignment? = null,
+        val statblock: StatblockData? = null
     ) : CreatureData()
 
     @Serializable
@@ -112,7 +258,8 @@ sealed class CreatureData {
         override val hitPoints: Long? = null,
         override val armorClass: Long? = null,
         override val alignment: Alignment? = null,
-        val isFriendly: Boolean? = null
+        val isFriendly: Boolean? = null,
+        val statblock: StatblockData? = null
     ) : CreatureData()
 
     @Serializable
