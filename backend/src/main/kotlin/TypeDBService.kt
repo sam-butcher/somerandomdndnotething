@@ -187,7 +187,6 @@ class TypeDBService(
         entityMap: Map<String, JsonObject>
     ): RoomData {
         val description = roomJson["description"]?.jsonPrimitive?.contentOrNull
-        val capacity = roomJson["capacity"]?.jsonPrimitive?.longOrNull
 
         val containedNames = containmentMap[roomName] ?: emptySet()
 
@@ -201,21 +200,21 @@ class TypeDBService(
                 val type = entityJson["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull ?: ""
                 val entity = entityJson["entity"]?.jsonObject
 
-                when {
-                    type in setOf("monster", "npc", "pc") -> {
+                when (type) {
+                    in setOf("monster", "npc", "pc") -> {
                         if (entity != null) creatures.add(parseCreatureFromEntity(entity, type))
                     }
-                    type in setOf("item", "magic-item") -> {
+                    in setOf("item", "magic-item") -> {
                         if (entity != null) items.add(parseItemFromEntity(entity, type))
                     }
-                    type == "box-container" -> {
+                    "box-container" -> {
                         if (entity != null) containers.add(buildContainer(containedName, entity, containmentMap, entityMap))
                     }
                 }
             }
         }
 
-        return RoomData(roomName, description, capacity, creatures, items, containers)
+        return RoomData(roomName, description, creatures, items, containers)
     }
 
     private fun buildContainer(
@@ -225,7 +224,6 @@ class TypeDBService(
         entityMap: Map<String, JsonObject>
     ): ContainerData {
         val description = containerJson["description"]?.jsonPrimitive?.contentOrNull
-        val capacity = containerJson["capacity"]?.jsonPrimitive?.longOrNull
 
         val containedNames = containmentMap[containerName] ?: emptySet()
 
@@ -239,14 +237,14 @@ class TypeDBService(
                 val type = entityJson["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull ?: ""
                 val entity = entityJson["entity"]?.jsonObject
 
-                when {
-                    type in setOf("monster", "npc", "pc") -> {
+                when (type) {
+                    in setOf("monster", "npc", "pc") -> {
                         if (entity != null) creatures.add(parseCreatureFromEntity(entity, type))
                     }
-                    type in setOf("item", "magic-item") -> {
+                    in setOf("item", "magic-item") -> {
                         if (entity != null) items.add(parseItemFromEntity(entity, type))
                     }
-                    type == "box-container" -> {
+                    "box-container" -> {
                         // Recursive call for nested containers
                         if (entity != null) nestedContainers.add(buildContainer(containedName, entity, containmentMap, entityMap))
                     }
@@ -254,7 +252,7 @@ class TypeDBService(
             }
         }
 
-        return ContainerData.BoxContainer(containerName, description, capacity, items, creatures, nestedContainers)
+        return ContainerData.BoxContainer(containerName, description, items, creatures, nestedContainers)
     }
 
     private fun parseCreatureFromEntity(entity: JsonObject, type: String): CreatureData {
@@ -263,22 +261,27 @@ class TypeDBService(
         val level = entity["level"]?.jsonPrimitive?.longOrNull
         val hitPoints = entity["hit-points"]?.jsonPrimitive?.longOrNull
         val armorClass = entity["armor-class"]?.jsonPrimitive?.longOrNull
+        val alignmentStr = entity["alignment"]?.jsonPrimitive?.contentOrNull
+        val alignment = Alignment.fromString(alignmentStr)
         val isFriendly = entity["is-friendly"]?.jsonPrimitive?.booleanOrNull
 
         return when (type) {
-            "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass)
-            "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, isFriendly)
-            "pc" -> CreatureData.PC(name, description, level, hitPoints, armorClass)
-            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass)
+            "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment)
+            "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, alignment, isFriendly)
+            "pc" -> CreatureData.PC(name, description, level, hitPoints, armorClass, alignment)
+            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment)
         }
     }
 
     private fun parseItemFromEntity(entity: JsonObject, type: String): ItemData {
         val name = entity["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = entity["description"]?.jsonPrimitive?.contentOrNull
+        val requiresAttunement = entity["requires-attunement"]?.jsonPrimitive?.booleanOrNull
+        val rarityStr = entity["rarity"]?.jsonPrimitive?.contentOrNull
+        val rarity = Rarity.fromString(rarityStr)
 
         return when (type) {
-            "magic-item" -> ItemData.MagicItem(name, description)
+            "magic-item" -> ItemData.MagicItem(name, description, requiresAttunement, rarity)
             "item" -> ItemData.RegularItem(name, description)
             else -> ItemData.RegularItem(name, description)
         }

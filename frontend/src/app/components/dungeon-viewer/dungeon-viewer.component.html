@@ -90,9 +90,6 @@
             <div class="room-header" (click)="toggleRoom($index)">
               <span class="expand-icon">{{ isRoomExpanded($index) ? '▼' : '▶' }}</span>
               <h3 class="room-name">{{ room.name }}</h3>
-              @if (room.capacity) {
-                <span class="room-capacity">Capacity: {{ room.capacity }}</span>
-              }
             </div>
 
             <!-- Room Contents (Expandable) -->
@@ -125,6 +122,9 @@
                               @if (creature.armorClass) {
                                 <span class="stat">AC: {{ creature.armorClass }}</span>
                               }
+                              @if (creature.alignment) {
+                                <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
+                              }
                               @if (creature.type === 'npc' && creature.isFriendly !== null) {
                                 <span class="stat" [class.friendly]="creature.isFriendly">
                                   {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
@@ -151,6 +151,16 @@
                             @if (item.description) {
                               <p class="item-description">{{ item.description }}</p>
                             }
+                            @if (item.type === 'magic-item') {
+                              <div class="item-stats">
+                                @if (item.rarity) {
+                                  <span class="stat" [class]="getRarityClass(item.rarity)">{{ item.rarity }}</span>
+                                }
+                                @if (item.requiresAttunement) {
+                                  <span class="stat attunement">Requires Attunement</span>
+                                }
+                              </div>
+                            }
                           </div>
                         </div>
                       }
@@ -170,9 +180,6 @@
                           </span>
                           <span class="icon">{{ getContainerIcon() }}</span>
                           <strong class="container-name">{{ container.name }}</strong>
-                          @if (container.capacity) {
-                            <span class="container-capacity">Capacity: {{ container.capacity }}</span>
-                          }
                         </div>
 
                         @if (isContainerExpanded($index + '-' + $index)) {
@@ -201,6 +208,9 @@
                                         @if (creature.armorClass) {
                                           <span class="stat">AC: {{ creature.armorClass }}</span>
                                         }
+                                        @if (creature.alignment) {
+                                          <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
+                                        }
                                         @if (creature.type === 'npc' && creature.isFriendly !== null) {
                                           <span class="stat" [class.friendly]="creature.isFriendly">
                                             {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
@@ -222,6 +232,16 @@
                                       <strong class="item-name">{{ item.name }}</strong>
                                       @if (item.description) {
                                         <p class="item-description">{{ item.description }}</p>
+                                      }
+                                      @if (item.type === 'magic-item') {
+                                        <div class="item-stats">
+                                          @if (item.rarity) {
+                                            <span class="stat" [class]="getRarityClass(item.rarity)">{{ item.rarity }}</span>
+                                          }
+                                          @if (item.requiresAttunement) {
+                                            <span class="stat attunement">Requires Attunement</span>
+                                          }
+                                        </div>
                                       }
                                     </div>
                                   </div>

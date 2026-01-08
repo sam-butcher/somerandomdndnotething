@@ -7,7 +7,9 @@ import {
   RoomData,
   CreatureData,
   ItemData,
-  ContainerData
+  ContainerData,
+  Rarity,
+  Alignment
 } from '../../models/dungeon.models';
 
 @Component({
@@ -164,5 +166,27 @@ export class DungeonViewer {
 
   getContainerIcon(): string {
     return '🎁';
+  }
+
+  getRarityClass(rarity?: Rarity): string {
+    if (!rarity) return '';
+    switch (rarity) {
+      case Rarity.COMMON: return 'rarity-common';
+      case Rarity.UNCOMMON: return 'rarity-uncommon';
+      case Rarity.RARE: return 'rarity-rare';
+      case Rarity.VERY_RARE: return 'rarity-very-rare';
+      case Rarity.LEGENDARY: return 'rarity-legendary';
+      case Rarity.ARTIFACT: return 'rarity-artifact';
+      default: return '';
+    }
+  }
+
+  getAlignmentClass(alignment?: Alignment): string {
+    if (!alignment) return '';
+    // Extract the moral axis (Good/Neutral/Evil) for coloring
+    if (alignment.includes('Good')) return 'alignment-good';
+    if (alignment.includes('Evil')) return 'alignment-evil';
+    if (alignment === Alignment.UNALIGNED) return 'alignment-unaligned';
+    return 'alignment-neutral';
   }
 }

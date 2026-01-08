@@ -4,6 +4,62 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+enum class Alignment {
+    @SerialName("Lawful Good") LAWFUL_GOOD,
+    @SerialName("Neutral Good") NEUTRAL_GOOD,
+    @SerialName("Chaotic Good") CHAOTIC_GOOD,
+    @SerialName("Lawful Neutral") LAWFUL_NEUTRAL,
+    @SerialName("True Neutral") TRUE_NEUTRAL,
+    @SerialName("Chaotic Neutral") CHAOTIC_NEUTRAL,
+    @SerialName("Lawful Evil") LAWFUL_EVIL,
+    @SerialName("Neutral Evil") NEUTRAL_EVIL,
+    @SerialName("Chaotic Evil") CHAOTIC_EVIL,
+    @SerialName("Unaligned") UNALIGNED;
+
+    companion object {
+        fun fromString(value: String?): Alignment? {
+            return when (value) {
+                "Lawful Good" -> LAWFUL_GOOD
+                "Neutral Good" -> NEUTRAL_GOOD
+                "Chaotic Good" -> CHAOTIC_GOOD
+                "Lawful Neutral" -> LAWFUL_NEUTRAL
+                "True Neutral" -> TRUE_NEUTRAL
+                "Chaotic Neutral" -> CHAOTIC_NEUTRAL
+                "Lawful Evil" -> LAWFUL_EVIL
+                "Neutral Evil" -> NEUTRAL_EVIL
+                "Chaotic Evil" -> CHAOTIC_EVIL
+                "Unaligned" -> UNALIGNED
+                else -> null
+            }
+        }
+    }
+}
+
+@Serializable
+enum class Rarity {
+    @SerialName("Common") COMMON,
+    @SerialName("Uncommon") UNCOMMON,
+    @SerialName("Rare") RARE,
+    @SerialName("Very Rare") VERY_RARE,
+    @SerialName("Legendary") LEGENDARY,
+    @SerialName("Artifact") ARTIFACT;
+
+    companion object {
+        fun fromString(value: String?): Rarity? {
+            return when (value) {
+                "Common" -> COMMON
+                "Uncommon" -> UNCOMMON
+                "Rare" -> RARE
+                "Very Rare" -> VERY_RARE
+                "Legendary" -> LEGENDARY
+                "Artifact" -> ARTIFACT
+                else -> null
+            }
+        }
+    }
+}
+
+@Serializable
 data class DungeonGraph(
     val name: String,
     val description: String? = null,
@@ -14,7 +70,6 @@ data class DungeonGraph(
 data class RoomData(
     val name: String,
     val description: String? = null,
-    val capacity: Long? = null,
     val creatures: List<CreatureData> = emptyList(),
     val items: List<ItemData> = emptyList(),
     val containers: List<ContainerData> = emptyList()
@@ -28,6 +83,7 @@ sealed class CreatureData {
     abstract val level: Long?
     abstract val hitPoints: Long?
     abstract val armorClass: Long?
+    abstract val alignment: Alignment?
 
     @Serializable
     @SerialName("monster")
@@ -36,7 +92,8 @@ sealed class CreatureData {
         override val description: String? = null,
         override val level: Long? = null,
         override val hitPoints: Long? = null,
-        override val armorClass: Long? = null
+        override val armorClass: Long? = null,
+        override val alignment: Alignment? = null
     ) : CreatureData()
 
     @Serializable
@@ -47,6 +104,7 @@ sealed class CreatureData {
         override val level: Long? = null,
         override val hitPoints: Long? = null,
         override val armorClass: Long? = null,
+        override val alignment: Alignment? = null,
         val isFriendly: Boolean? = null
     ) : CreatureData()
 
@@ -57,7 +115,8 @@ sealed class CreatureData {
         override val description: String? = null,
         override val level: Long? = null,
         override val hitPoints: Long? = null,
-        override val armorClass: Long? = null
+        override val armorClass: Long? = null,
+        override val alignment: Alignment? = null
     ) : CreatureData()
 }
 
@@ -79,6 +138,8 @@ sealed class ItemData {
     data class MagicItem(
         override val name: String,
         override val description: String? = null,
+        val requiresAttunement: Boolean? = null,
+        val rarity: Rarity? = null
     ) : ItemData()
 }
 
@@ -87,7 +148,6 @@ sealed class ItemData {
 sealed class ContainerData {
     abstract val name: String
     abstract val description: String?
-    abstract val capacity: Long?
     abstract val items: List<ItemData>
     abstract val creatures: List<CreatureData>
 
@@ -96,7 +156,6 @@ sealed class ContainerData {
     data class BoxContainer(
         override val name: String,
         override val description: String? = null,
-        override val capacity: Long? = null,
         override val items: List<ItemData> = emptyList(),
         override val creatures: List<CreatureData> = emptyList(),
         val containers: List<ContainerData> = emptyList() // for nested containers

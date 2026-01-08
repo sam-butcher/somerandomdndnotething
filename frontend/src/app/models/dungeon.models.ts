@@ -1,5 +1,27 @@
 // TypeScript models matching backend API response structure
 
+export enum Alignment {
+  LAWFUL_GOOD = 'Lawful Good',
+  NEUTRAL_GOOD = 'Neutral Good',
+  CHAOTIC_GOOD = 'Chaotic Good',
+  LAWFUL_NEUTRAL = 'Lawful Neutral',
+  TRUE_NEUTRAL = 'True Neutral',
+  CHAOTIC_NEUTRAL = 'Chaotic Neutral',
+  LAWFUL_EVIL = 'Lawful Evil',
+  NEUTRAL_EVIL = 'Neutral Evil',
+  CHAOTIC_EVIL = 'Chaotic Evil',
+  UNALIGNED = 'Unaligned'
+}
+
+export enum Rarity {
+  COMMON = 'Common',
+  UNCOMMON = 'Uncommon',
+  RARE = 'Rare',
+  VERY_RARE = 'Very Rare',
+  LEGENDARY = 'Legendary',
+  ARTIFACT = 'Artifact'
+}
+
 export interface DungeonGraph {
   name: string;
   description?: string;
@@ -9,7 +31,6 @@ export interface DungeonGraph {
 export interface RoomData {
   name: string;
   description?: string;
-  capacity?: number;
   creatures?: CreatureData[];
   items?: ItemData[];
   containers?: ContainerData[];
@@ -26,6 +47,7 @@ export interface Monster {
   level?: number;
   hitPoints?: number;
   armorClass?: number;
+  alignment?: Alignment;
 }
 
 export interface NPC {
@@ -35,6 +57,7 @@ export interface NPC {
   level?: number;
   hitPoints?: number;
   armorClass?: number;
+  alignment?: Alignment;
   isFriendly?: boolean;
 }
 
@@ -45,6 +68,7 @@ export interface PC {
   level?: number;
   hitPoints?: number;
   armorClass?: number;
+  alignment?: Alignment;
 }
 
 export type ItemData = RegularItem | MagicItem;
@@ -59,7 +83,8 @@ export interface MagicItem {
   type: 'magic-item';
   name: string;
   description?: string;
-  isMagical?: boolean;
+  requiresAttunement?: boolean;
+  rarity?: Rarity;
 }
 
 export type ContainerData = BoxContainer;
@@ -68,7 +93,6 @@ export interface BoxContainer {
   type: 'box-container';
   name: string;
   description?: string;
-  capacity?: number;
   items?: ItemData[];
   creatures?: CreatureData[];
   containers?: ContainerData[];

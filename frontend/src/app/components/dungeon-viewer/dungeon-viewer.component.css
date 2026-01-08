@@ -508,3 +508,84 @@
     padding: 15px;
   }
 }
+
+/* Rarity Colors */
+.rarity-common {
+  background: rgba(158, 158, 158, 0.3) !important;
+  color: #424242 !important;
+  border: 1px solid rgba(97, 97, 97, 0.4);
+}
+
+.rarity-uncommon {
+  background: rgba(76, 175, 80, 0.3) !important;
+  color: #2e7d32 !important;
+  border: 1px solid rgba(56, 142, 60, 0.5);
+}
+
+.rarity-rare {
+  background: rgba(33, 150, 243, 0.3) !important;
+  color: #1565c0 !important;
+  border: 1px solid rgba(25, 118, 210, 0.5);
+}
+
+.rarity-very-rare {
+  background: rgba(156, 39, 176, 0.3) !important;
+  color: #6a1b9a !important;
+  border: 1px solid rgba(123, 31, 162, 0.5);
+}
+
+.rarity-legendary {
+  background: rgba(255, 152, 0, 0.3) !important;
+  color: #e65100 !important;
+  border: 1px solid rgba(245, 124, 0, 0.5);
+  font-weight: bold;
+}
+
+.rarity-artifact {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(218, 165, 32, 0.4)) !important;
+  color: #b8860b !important;
+  border: 2px solid rgba(184, 134, 11, 0.6);
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+/* Alignment Colors */
+.alignment-good {
+  background: rgba(76, 175, 80, 0.25) !important;
+  color: #2e7d32 !important;
+  border: 1px solid rgba(56, 142, 60, 0.4);
+}
+
+.alignment-neutral {
+  background: rgba(158, 158, 158, 0.25) !important;
+  color: #616161 !important;
+  border: 1px solid rgba(117, 117, 117, 0.4);
+}
+
+.alignment-evil {
+  background: rgba(244, 67, 54, 0.25) !important;
+  color: #c62828 !important;
+  border: 1px solid rgba(211, 47, 47, 0.4);
+}
+
+.alignment-unaligned {
+  background: rgba(121, 85, 72, 0.25) !important;
+  color: #5d4037 !important;
+  border: 1px solid rgba(93, 64, 55, 0.4);
+}
+
+/* Attunement Badge */
+.attunement {
+  background: rgba(103, 58, 183, 0.25) !important;
+  color: #4527a0 !important;
+  border: 1px solid rgba(81, 45, 168, 0.4);
+  font-size: 0.85rem;
+}
+
+/* Item Stats Container */
+.item-stats {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}

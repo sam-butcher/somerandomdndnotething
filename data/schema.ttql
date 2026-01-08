@@ -10,8 +10,27 @@ attribute level, value integer;
 attribute hit-points, value integer;
 attribute armor-class, value integer;
 attribute is-friendly, value boolean;
-attribute is-magical, value boolean;
-attribute capacity, value integer;
+attribute alignment, value string @values(
+    "Lawful Good",
+    "Neutral Good",
+    "Chaotic Good",
+    "Lawful Neutral",
+    "True Neutral",
+    "Chaotic Neutral",
+    "Lawful Evil",
+    "Neutral Evil",
+    "Chaotic Evil",
+    "Unaligned"
+);
+attribute requires-attunement, value boolean;
+attribute rarity, value string @values(
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Very Rare",
+    "Legendary",
+    "Artifact"
+);
 
 # ============================================================================
 # Entity Types - Creatures
@@ -23,6 +42,7 @@ entity creature @abstract,
     owns level,
     owns hit-points,
     owns armor-class,
+    owns alignment,
     plays containment:contained;
 
 entity monster, sub creature;
@@ -39,7 +59,6 @@ entity pc, sub creature;
 entity container @abstract,
     owns name,
     owns description,
-    owns capacity,
     plays containment:container,
     plays containment:contained;
 
@@ -62,7 +81,9 @@ entity item,
     owns description,
     plays containment:contained;
 
-entity magic-item, sub item;
+entity magic-item, sub item,
+    owns requires-attunement,
+    owns rarity;
 
 # ============================================================================
 # Relation Types
