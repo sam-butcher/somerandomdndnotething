@@ -34,12 +34,12 @@ attribute rarity, value string @values(
 );
 
 # Ability Scores
-attribute strength, value integer;
-attribute dexterity, value integer;
-attribute constitution, value integer;
-attribute intelligence, value integer;
-attribute wisdom, value integer;
-attribute charisma, value integer;
+attribute strength, value integer @range(1, 30);
+attribute dexterity, value integer @range(1, 30);
+attribute constitution, value integer @range(1, 30);
+attribute intelligence, value integer @range(1, 30);
+attribute wisdom, value integer @range(1, 30);
+attribute charisma, value integer @range(1, 30);
 
 # Combat Stats
 attribute challenge-rating, value string;
@@ -108,7 +108,10 @@ entity creature @abstract,
     owns hit-points,
     owns armor-class,
     owns alignment,
-    # New statblock attributes (Monster/NPC only will use these)
+    plays containment:contained,
+    plays has-ability:creature;
+
+entity statblock-creature @abstract, sub creature,
     owns strength,
     owns dexterity,
     owns constitution,
@@ -155,13 +158,11 @@ entity creature @abstract,
     owns skill-religion,
     owns skill-sleight-of-hand,
     owns skill-stealth,
-    owns skill-survival,
-    plays containment:contained,
-    plays has-ability:creature;
+    owns skill-survival;
 
-entity monster, sub creature;
+entity monster, sub statblock-creature;
 
-entity npc, sub creature,
+entity npc, sub statblock-creature,
     owns is-friendly;
 
 entity pc, sub creature;
