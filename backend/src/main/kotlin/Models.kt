@@ -1,5 +1,6 @@
 package com.sambutcher
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -19,32 +20,86 @@ data class RoomData(
     val containers: List<ContainerData> = emptyList()
 )
 
+// Creature type hierarchy matching TypeDB schema
 @Serializable
-data class CreatureData(
-    val type: String, // "monster", "npc", or "pc"
-    val name: String,
-    val description: String? = null,
-    val level: Long? = null,
-    val hitPoints: Long? = null,
-    val armorClass: Long? = null,
-    val isFriendly: Boolean? = null // for NPCs
-)
+sealed class CreatureData {
+    abstract val name: String
+    abstract val description: String?
+    abstract val level: Long?
+    abstract val hitPoints: Long?
+    abstract val armorClass: Long?
 
-@Serializable
-data class ItemData(
-    val type: String, // "item" or "magic-item"
-    val name: String,
-    val description: String? = null,
-    val isMagical: Boolean? = null
-)
+    @Serializable
+    @SerialName("monster")
+    data class Monster(
+        override val name: String,
+        override val description: String? = null,
+        override val level: Long? = null,
+        override val hitPoints: Long? = null,
+        override val armorClass: Long? = null
+    ) : CreatureData()
 
+    @Serializable
+    @SerialName("npc")
+    data class NPC(
+        override val name: String,
+        override val description: String? = null,
+        override val level: Long? = null,
+        override val hitPoints: Long? = null,
+        override val armorClass: Long? = null,
+        val isFriendly: Boolean? = null
+    ) : CreatureData()
+
+    @Serializable
+    @SerialName("pc")
+    data class PC(
+        override val name: String,
+        override val description: String? = null,
+        override val level: Long? = null,
+        override val hitPoints: Long? = null,
+        override val armorClass: Long? = null
+    ) : CreatureData()
+}
+
+// Item type hierarchy matching TypeDB schema
 @Serializable
-data class ContainerData(
-    val type: String, // "box-container"
-    val name: String,
-    val description: String? = null,
-    val capacity: Long? = null,
-    val items: List<ItemData> = emptyList(),
-    val creatures: List<CreatureData> = emptyList(),
-    val containers: List<ContainerData> = emptyList() // for nested containers
-)
+sealed class ItemData {
+    abstract val name: String
+    abstract val description: String?
+
+    @Serializable
+    @SerialName("item")
+    data class RegularItem(
+        override val name: String,
+        override val description: String? = null
+    ) : ItemData()
+
+    @Serializable
+    @SerialName("magic-item")
+    data class MagicItem(
+        override val name: String,
+        override val description: String? = null,
+        val isMagical: Boolean? = true
+    ) : ItemData()
+}
+
+// Container type hierarchy matching TypeDB schema
+@Serializable
+sealed class ContainerData {
+    abstract val name: String
+    abstract val description: String?
+    abstract val capacity: Long?
+    abstract val items: List<ItemData>
+    abstract val creatures: List<CreatureData>
+
+    @Serializable
+    @SerialName("box-container")
+    data class BoxContainer(
+        override val name: String,
+        override val description: String? = null,
+        override val capacity: Long? = null,
+        override val items: List<ItemData> = emptyList(),
+        override val creatures: List<CreatureData> = emptyList(),
+        val containers: List<ContainerData> = emptyList() // for nested containers
+    ) : ContainerData()
+}

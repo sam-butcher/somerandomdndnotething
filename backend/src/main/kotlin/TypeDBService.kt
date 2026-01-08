@@ -58,9 +58,10 @@ class TypeDBService(
                         "capacity": $r.capacity,
                         "creatures": [
                             match containment (container: $r, contained: $c);
-                                $c isa creature;
+                                $c isa! $c-type;
+                                $c-type sub creature;
                             fetch {
-                                "type": $c.type,
+                                "type": $c-type.label,
                                 "name": $c.name,
                                 "description": $c.description,
                                 "level": $c.level,
@@ -71,9 +72,10 @@ class TypeDBService(
                         ],
                         "items": [
                             match containment (container: $r, contained: $i);
-                                $i isa item;
+                                $i isa! $i-type;
+                                $i-type sub item;
                             fetch {
-                                "type": $i.type,
+                                "type": $i-type.label,
                                 "name": $i.name,
                                 "description": $i.description,
                                 "isMagical": $i.is-magical
@@ -81,17 +83,19 @@ class TypeDBService(
                         ],
                         "containers": [
                             match containment (container: $r, contained: $bc);
-                                $bc isa box-container;
+                                $bc isa! $bc-type;
+                                $bc-type sub box-container;
                             fetch {
-                                "type": "box-container",
+                                "type": $bc-type.label,
                                 "name": $bc.name,
                                 "description": $bc.description,
                                 "capacity": $bc.capacity,
                                 "items": [
                                     match containment (container: $bc, contained: $bi);
-                                        $bi isa item;
+                                        $bi isa! $bi-type;
+                                        $bi-type sub item;
                                     fetch {
-                                        "type": $bi.type,
+                                        "type": $bi-type.label,
                                         "name": $bi.name,
                                         "description": $bi.description,
                                         "isMagical": $bi.is-magical
@@ -99,9 +103,10 @@ class TypeDBService(
                                 ],
                                 "creatures": [
                                     match containment (container: $bc, contained: $bcc);
-                                        $bcc isa creature;
+                                        $bcc isa! $bcc-type;
+                                        $bcc-type sub creature;
                                     fetch {
-                                        "type": $bcc.type,
+                                        "type": $bcc-type.label,
                                         "name": $bcc.name,
                                         "description": $bcc.description,
                                         "level": $bcc.level,
@@ -157,7 +162,7 @@ class TypeDBService(
     }
 
     private fun parseCreature(json: JsonObject): CreatureData {
-        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "creature"
+        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "monster"
         val name = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = json["description"]?.jsonPrimitive?.contentOrNull
         val level = json["level"]?.jsonPrimitive?.longOrNull
@@ -165,7 +170,12 @@ class TypeDBService(
         val armorClass = json["armorClass"]?.jsonPrimitive?.longOrNull
         val isFriendly = json["isFriendly"]?.jsonPrimitive?.booleanOrNull
 
-        return CreatureData(type, name, description, level, hitPoints, armorClass, isFriendly)
+        return when (type) {
+            "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass)
+            "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, isFriendly)
+            "pc" -> CreatureData.PC(name, description, level, hitPoints, armorClass)
+            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass) // default to monster
+        }
     }
 
     private fun parseItem(json: JsonObject): ItemData {
@@ -174,7 +184,11 @@ class TypeDBService(
         val description = json["description"]?.jsonPrimitive?.contentOrNull
         val isMagical = json["isMagical"]?.jsonPrimitive?.booleanOrNull
 
-        return ItemData(type, name, description, isMagical)
+        return when (type) {
+            "magic-item" -> ItemData.MagicItem(name, description, isMagical)
+            "item" -> ItemData.RegularItem(name, description)
+            else -> ItemData.RegularItem(name, description) // default to regular item
+        }
     }
 
     private fun parseContainer(json: JsonObject): ContainerData {
@@ -187,6 +201,9 @@ class TypeDBService(
         val creatures = json["creatures"]?.jsonArray?.map { parseCreature(it.jsonObject) } ?: emptyList()
         val containers = json["containers"]?.jsonArray?.map { parseContainer(it.jsonObject) } ?: emptyList()
 
-        return ContainerData(type, name, description, capacity, items, creatures, containers)
+        return when (type) {
+            "box-container" -> ContainerData.BoxContainer(name, description, capacity, items, creatures, containers)
+            else -> ContainerData.BoxContainer(name, description, capacity, items, creatures, containers) // default to box-container
+        }
     }
 }
