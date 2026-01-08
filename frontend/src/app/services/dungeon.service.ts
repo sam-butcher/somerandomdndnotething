@@ -1,44 +1,43 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, from, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { DungeonGraph, DungeonSummary } from '../models/dungeon.models';
+import { TypeDBQueryService } from './typedb-query.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DungeonService {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api/dungeons';
+  private readonly queryService = inject(TypeDBQueryService);
 
   getAllDungeons(): Observable<DungeonSummary[]> {
-    return this.http.get<DungeonSummary[]>(this.baseUrl)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return from(this.queryService.getAllDungeons()).pipe(catchError(this.handleError));
   }
 
   getDungeon(id: string): Observable<DungeonGraph> {
-    return this.http.get<DungeonGraph>(`${this.baseUrl}/${encodeURIComponent(id)}`)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return from(this.queryService.getDungeonGraph(id)).pipe(
+      map((graph) => {
+        if (!graph) {
+          throw new Error('Dungeon not found');
+        }
+        return graph;
+      }),
+      catchError(this.handleError)
+    );
   }
 
-  private handleError(error: HttpErrorResponse): Observable<never> {
+  private handleError(error: any): Observable<never> {
     let errorMessage = 'An unknown error occurred';
 
-    if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
-      errorMessage = `Network error: ${error.error.message}`;
-    } else {
-      // Backend returned an unsuccessful response code
-      if (error.status === 404) {
+    if (error.message) {
+      if (error.message.includes('Not connected')) {
+        errorMessage = 'Not connected to TypeDB. Please configure connection in Settings.';
+      } else if (error.message.includes('Database') && error.message.includes('does not exist')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('Dungeon not found')) {
         errorMessage = 'Dungeon not found';
-      } else if (error.status === 0) {
-        errorMessage = 'Unable to connect to server. Make sure the backend is running on http://localhost:8080';
       } else {
-        errorMessage = `Server error: ${error.status} - ${error.message}`;
+        errorMessage = `TypeDB error: ${error.message}`;
       }
     }
 

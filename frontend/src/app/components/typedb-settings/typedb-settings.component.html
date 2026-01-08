@@ -1,0 +1,78 @@
+<div class="settings-container">
+  <h2>TypeDB Connection Settings</h2>
+
+  <div class="status-indicator" [class.connected]="connectionStatus().connected">
+    <span class="status-icon">{{ connectionStatus().connected ? '🟢' : '🔴' }}</span>
+    <span class="status-text"> {{ connectionStatus().connected ? 'Connected' : 'Disconnected' }} </span>
+    @if (connectionStatus().error) {
+    <span class="error-message">{{ connectionStatus().error }}</span>
+    }
+  </div>
+
+  <form [formGroup]="connectionForm">
+    <div class="preset-buttons">
+      <button type="button" (click)="onUseCloudDefaults()">Use TypeDB Cloud</button>
+      <button type="button" (click)="onUseLocalDefaults()">Use Local Instance</button>
+    </div>
+
+    <div class="form-field">
+      <label for="address">Server Address</label>
+      <input
+        id="address"
+        type="text"
+        formControlName="address"
+        placeholder="https://cluster.typedb.com:80"
+      />
+    </div>
+
+    <div class="form-field">
+      <label for="database">Database Name</label>
+      <input id="database" type="text" formControlName="database" placeholder="sam-hackathon" />
+    </div>
+
+    <div class="form-field">
+      <label for="username">Username</label>
+      <input id="username" type="text" formControlName="username" placeholder="admin" />
+    </div>
+
+    <div class="form-field">
+      <label for="password">Password</label>
+      <input id="password" type="password" formControlName="password" placeholder="Enter password" />
+    </div>
+
+    <div class="form-field checkbox">
+      <label>
+        <input type="checkbox" formControlName="tlsEnabled" />
+        Enable TLS
+      </label>
+    </div>
+
+    <div class="action-buttons">
+      <button
+        type="button"
+        (click)="onTestConnection()"
+        [disabled]="connectionForm.invalid || testing()"
+      >
+        {{ testing() ? 'Testing...' : 'Test Connection' }}
+      </button>
+      @if (!connectionStatus().connected) {
+      <button
+        type="button"
+        (click)="onConnect()"
+        [disabled]="connectionForm.invalid || connecting()"
+        class="primary"
+      >
+        {{ connecting() ? 'Connecting...' : 'Connect' }}
+      </button>
+      } @else {
+      <button type="button" (click)="onDisconnect()" class="danger">Disconnect</button>
+      }
+    </div>
+
+    @if (testResult()) {
+    <div class="test-result" [class.success]="testResult()!.success" [class.error]="!testResult()!.success">
+      {{ testResult()!.message }}
+    </div>
+    }
+  </form>
+</div>

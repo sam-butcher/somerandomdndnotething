@@ -1,0 +1,25 @@
+.app-nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(180deg, #2c1810 0%, #1a0f08 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.app-nav a {
+  color: #d4af37;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.app-nav a:hover {
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.app-nav a.active {
+  background: #d4af37;
+  color: #2c1810;
+}
