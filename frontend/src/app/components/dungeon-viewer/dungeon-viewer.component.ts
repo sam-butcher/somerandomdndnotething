@@ -1,9 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DungeonService } from '../../services/dungeon.service';
 import {
   DungeonGraph,
+  DungeonSummary,
   RoomData,
   CreatureData,
   ItemData,
@@ -18,11 +19,12 @@ import {
   templateUrl: './dungeon-viewer.component.html',
   styleUrl: './dungeon-viewer.component.css'
 })
-export class DungeonViewer {
+export class DungeonViewer implements OnInit {
   private readonly dungeonService = inject(DungeonService);
 
   // State signals
-  protected readonly dungeonName = signal('');
+  protected readonly dungeonList = signal<DungeonSummary[]>([]);
+  protected readonly selectedDungeonId = signal<string>('');
   protected readonly dungeon = signal<DungeonGraph | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -52,10 +54,24 @@ export class DungeonViewer {
     };
   });
 
-  searchDungeon(): void {
-    const name = this.dungeonName().trim();
-    if (!name) {
-      this.error.set('Please enter a dungeon name');
+  ngOnInit(): void {
+    this.loadDungeonList();
+  }
+
+  loadDungeonList(): void {
+    this.dungeonService.getAllDungeons().subscribe({
+      next: (dungeons) => {
+        this.dungeonList.set(dungeons);
+      },
+      error: (err) => {
+        this.error.set(err.message);
+      }
+    });
+  }
+
+  onDungeonSelected(dungeonId: string): void {
+    if (!dungeonId) {
+      this.dungeon.set(null);
       return;
     }
 
@@ -63,7 +79,7 @@ export class DungeonViewer {
     this.error.set(null);
     this.dungeon.set(null);
 
-    this.dungeonService.getDungeon(name).subscribe({
+    this.dungeonService.getDungeon(dungeonId).subscribe({
       next: (data) => {
         this.dungeon.set(data);
         this.loading.set(false);

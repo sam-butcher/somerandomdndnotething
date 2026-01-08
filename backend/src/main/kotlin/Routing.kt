@@ -26,20 +26,25 @@ fun Application.configureRouting() {
             call.respondText("Hello World!")
         }
 
-        get("/api/dungeons/{name}") {
-            val dungeonName = call.parameters["name"] ?: run {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Dungeon name is required"))
+        get("/api/dungeons") {
+            val dungeons = typeDBService.getAllDungeons()
+            call.respond(dungeons)
+        }
+
+        get("/api/dungeons/{id}") {
+            val dungeonId = call.parameters["id"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Dungeon ID is required"))
                 return@get
             }
 
-            val dungeonGraph = typeDBService.getDungeonGraph(dungeonName)
+            val dungeonGraph = typeDBService.getDungeonGraph(dungeonId)
 
             if (dungeonGraph != null) {
                 call.respond(dungeonGraph)
             } else {
                 call.respond(
                     HttpStatusCode.NotFound,
-                    mapOf("error" to "Dungeon '$dungeonName' not found")
+                    mapOf("error" to "Dungeon with ID '$dungeonId' not found")
                 )
             }
         }

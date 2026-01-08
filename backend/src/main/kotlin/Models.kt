@@ -61,9 +61,16 @@ enum class Rarity {
 
 @Serializable
 data class DungeonGraph(
+    val id: String,
     val name: String,
     val description: String? = null,
     val rooms: List<RoomData>
+)
+
+@Serializable
+data class DungeonSummary(
+    val id: String,
+    val name: String
 )
 
 @Serializable

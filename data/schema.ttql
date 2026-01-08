@@ -4,6 +4,7 @@ define
 # Attribute Types
 # ============================================================================
 
+attribute id, value string;
 attribute name, value string;
 attribute description, value string;
 attribute level, value integer;
@@ -72,6 +73,7 @@ entity box-container, sub container;
 # ============================================================================
 
 entity dungeon,
+    owns id @key,
     owns name,
     owns description,
     plays dungeon-composition:dungeon;

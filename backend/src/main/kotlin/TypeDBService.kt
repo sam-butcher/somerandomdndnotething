@@ -23,42 +23,80 @@ class TypeDBService(
         logger.info("TypeDB connection closed")
     }
 
-    fun getDungeonGraph(dungeonName: String): DungeonGraph? {
+    fun getAllDungeons(): List<DungeonSummary> {
         return try {
             driver.transaction(database, Transaction.Type.READ).use { tx ->
-                queryDungeonGraph(tx, dungeonName)
+                queryAllDungeons(tx)
             }
         } catch (e: Exception) {
-            logger.error("Error querying dungeon graph for '$dungeonName'", e)
+            logger.error("Error querying all dungeons", e)
+            emptyList()
+        }
+    }
+
+    fun getDungeonGraph(dungeonId: String): DungeonGraph? {
+        return try {
+            driver.transaction(database, Transaction.Type.READ).use { tx ->
+                queryDungeonGraph(tx, dungeonId)
+            }
+        } catch (e: Exception) {
+            logger.error("Error querying dungeon graph for '$dungeonId'", e)
             null
         }
     }
 
-    private fun queryDungeonGraph(tx: Transaction, dungeonName: String): DungeonGraph? {
+    private fun queryAllDungeons(tx: Transaction): List<DungeonSummary> {
+        val query = $$"""
+            match
+                $d isa dungeon;
+            fetch {
+                "id": $d.id,
+                "name": $d.name
+            };
+        """.trimIndent()
+
+        logger.info("Executing query for all dungeons")
+        val answer = tx.query(query).resolve()
+        val results = answer.asConceptDocuments().stream().toList()
+
+        return results.mapNotNull { result ->
+            val json = Json.parseToJsonElement(result.toString()).jsonObject
+            val id = json["id"]?.jsonPrimitive?.contentOrNull
+            val name = json["name"]?.jsonPrimitive?.contentOrNull
+            if (id != null && name != null) {
+                DungeonSummary(id, name)
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun queryDungeonGraph(tx: Transaction, dungeonId: String): DungeonGraph? {
         // First query: Get dungeon info and rooms
         val dungeonQuery = $$"""
             match
-                $d isa dungeon, has name "$$dungeonName";
+                $d isa dungeon, has id "$$dungeonId";
             fetch { $d.* };
         """.trimIndent()
 
-        logger.info("Executing dungeon query for: $dungeonName")
+        logger.info("Executing dungeon query for ID: $dungeonId")
         val dungeonAnswer = tx.query(dungeonQuery).resolve()
         val dungeonResults = dungeonAnswer.asConceptDocuments().stream().toList()
 
         if (dungeonResults.isEmpty()) {
-            logger.warn("No dungeon found with name: $dungeonName")
+            logger.warn("No dungeon found with ID: $dungeonId")
             return null
         }
 
         val dungeonJson = Json.parseToJsonElement(dungeonResults.first().toString()).jsonObject
+        val dungeonIdValue = dungeonJson["id"]?.jsonPrimitive?.contentOrNull ?: ""
         val dungeonNameValue = dungeonJson["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val dungeonDescription = dungeonJson["description"]?.jsonPrimitive?.contentOrNull
 
         // Second query: Get all rooms in the dungeon
         val roomsQuery = $$"""
             match
-                $d isa dungeon, has name "$$dungeonName";
+                $d isa dungeon, has id "$$dungeonId";
                 dungeon-composition (dungeon: $d, room-in-dungeon: $r);
             fetch { $r.* };
         """.trimIndent()
@@ -71,7 +109,7 @@ class TypeDBService(
         // This gets all entities that are transitively contained within rooms
         val allEntitiesQuery = $$"""
             match
-                $d isa dungeon, has name "$$dungeonName";
+                $d isa dungeon, has id "$$dungeonId";
                 dungeon-composition (dungeon: $d, room-in-dungeon: $r);
                 containment ($r, $entity) isa containment;
                 $entity isa! $entity-type;
@@ -177,7 +215,7 @@ class TypeDBService(
             buildRoom(roomName, roomJson, containmentMap, entityMap)
         }
 
-        return DungeonGraph(dungeonNameValue, dungeonDescription, rooms)
+        return DungeonGraph(dungeonIdValue, dungeonNameValue, dungeonDescription, rooms)
     }
 
     private fun buildRoom(

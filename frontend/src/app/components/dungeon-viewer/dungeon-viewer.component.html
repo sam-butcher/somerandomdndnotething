@@ -1,18 +1,24 @@
 <div class="dungeon-viewer">
-  <!-- Search Section -->
+  <!-- Dungeon Selection Section -->
   <div class="search-section parchment-panel">
     <h1 class="title">Dungeon Explorer</h1>
-    <div class="search-bar">
-      <input
-        type="text"
-        [(ngModel)]="dungeonName"
-        (keyup.enter)="searchDungeon()"
-        placeholder="Enter dungeon name..."
-        class="search-input"
-      />
-      <button (click)="searchDungeon()" [disabled]="loading()" class="search-button">
-        {{ loading() ? 'Searching...' : 'Explore' }}
-      </button>
+    <div class="selection-bar">
+      <label for="dungeon-select" class="selection-label">Select a Dungeon:</label>
+      <select
+        id="dungeon-select"
+        [(ngModel)]="selectedDungeonId"
+        (ngModelChange)="onDungeonSelected($event)"
+        [disabled]="loading()"
+        class="dungeon-select"
+      >
+        <option value="">-- Choose a dungeon --</option>
+        @for (dungeon of dungeonList(); track dungeon.id) {
+          <option [value]="dungeon.id">{{ dungeon.name }}</option>
+        }
+      </select>
+      @if (loading()) {
+        <span class="loading-indicator">Loading...</span>
+      }
     </div>
   </div>
 

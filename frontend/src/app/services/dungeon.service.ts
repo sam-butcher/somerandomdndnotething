@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { DungeonGraph } from '../models/dungeon.models';
+import { DungeonGraph, DungeonSummary } from '../models/dungeon.models';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +11,15 @@ export class DungeonService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = 'http://localhost:8080/api/dungeons';
 
-  getDungeon(name: string): Observable<DungeonGraph> {
-    return this.http.get<DungeonGraph>(`${this.baseUrl}/${encodeURIComponent(name)}`)
+  getAllDungeons(): Observable<DungeonSummary[]> {
+    return this.http.get<DungeonSummary[]>(this.baseUrl)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  getDungeon(id: string): Observable<DungeonGraph> {
+    return this.http.get<DungeonGraph>(`${this.baseUrl}/${encodeURIComponent(id)}`)
       .pipe(
         catchError(this.handleError)
       );

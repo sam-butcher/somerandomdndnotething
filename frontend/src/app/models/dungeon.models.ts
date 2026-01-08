@@ -22,7 +22,13 @@ export enum Rarity {
   ARTIFACT = 'Artifact'
 }
 
+export interface DungeonSummary {
+  id: string;
+  name: string;
+}
+
 export interface DungeonGraph {
+  id: string;
   name: string;
   description?: string;
   rooms: RoomData[];
