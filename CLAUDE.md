@@ -29,7 +29,9 @@ Full-stack application with a Kotlin/Ktor backend and Angular frontend. The proj
   - Router-based navigation with `RouterOutlet`
 
 ### Data
-- `data/schema.ttql`: Empty schema file (TypeQL schema, as yet unwritten)
+
+- TypeDB 3.7.0 database
+- `data/schema.ttql`: TypeQL schema modelling dungeons and characters
 
 ## Development Commands
 

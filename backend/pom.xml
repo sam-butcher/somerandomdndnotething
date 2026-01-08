@@ -18,6 +18,10 @@
         <main.class>io.ktor.server.netty.EngineMain</main.class>
     </properties>
     <repositories>
+        <repository>
+            <id>repo.typedb.com</id>
+            <url>https://repo.typedb.com/public/public-release/maven/</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -72,6 +76,21 @@
             <artifactId>kotlinx-coroutines-debug</artifactId>
             <version>1.6.4</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.typedb</groupId>
+            <artifactId>typedb-driver</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-server-content-negotiation-jvm</artifactId>
+            <version>${ktor_version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
+            <version>${ktor_version}</version>
         </dependency>
     </dependencies>
     <build>
