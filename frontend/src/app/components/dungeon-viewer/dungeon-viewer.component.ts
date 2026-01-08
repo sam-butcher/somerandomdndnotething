@@ -84,10 +84,6 @@ export class DungeonViewer implements OnInit {
       next: (data) => {
         this.dungeon.set(data);
         this.loading.set(false);
-        // Expand first room by default
-        if (data.rooms.length > 0) {
-          this.expandedRooms.set(new Set([0]));
-        }
       },
       error: (err) => {
         this.error.set(err.message);

@@ -16,6 +16,16 @@ import {
 } from '../models/dungeon.models';
 import { QueryResponse } from '@typedb/driver-http';
 
+interface ContainmentEdge {
+  containerName: string;
+  containedName: string;
+  containedType: string;
+}
+
+interface EntityAttributes {
+  [key: string]: any;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,214 +43,249 @@ export class TypeDBQueryService {
       if (response.answerType !== 'conceptDocuments') {
         return [];
       }
-      return response.answers as DungeonSummary[];
-    });
-  }
-
-  async getDungeonGraph(dungeonId: string): Promise<DungeonGraph | null> {
-    const dungeonData = await this.fetchDungeonMetadata(dungeonId);
-    if (!dungeonData) return null;
-
-    const roomsData = await this.fetchDungeonRooms(dungeonId);
-
-    const entityMap = await this.fetchAllEntities(dungeonId);
-
-    const containmentMap = await this.buildContainmentMap(roomsData, entityMap);
-
-    const rooms = await Promise.all(
-      roomsData.map((roomData) => this.buildRoom(roomData, containmentMap, entityMap))
-    );
-
-    console.log('asdf1', roomsData);
-    console.log('asdf2', entityMap);
-    console.log('asdf3', containmentMap);
-    console.log('asdf4', rooms);
-
-    return {
-      id: dungeonData.id,
-      name: dungeonData.name,
-      description: dungeonData.description,
-      rooms,
-    };
-  }
-
-  private async fetchDungeonMetadata(
-    dungeonId: string
-  ): Promise<{ id: string; name: string; description?: string } | null> {
-    const query = `
-      match
-        $d isa dungeon, has id "${dungeonId}";
-      fetch { $d.* };
-    `;
-
-    return this.connectionService.executeReadQuery(query, (response: any) => {
-      if (response.answerType !== 'conceptDocuments' || response.answers.length === 0) {
-        return null;
-      }
-      return response.answers[0];
-    });
-  }
-
-  private async fetchDungeonRooms(dungeonId: string): Promise<any[]> {
-    const query = `
-      match
-        $d isa dungeon, has id "${dungeonId}";
-        $r($d) isa dungeon-composition;
-        $r(room-in-dungeon: $room);
-      fetch { $room.* };
-    `;
-
-    return this.connectionService.executeReadQuery(query, (response: any) => {
-      if (response.answerType !== 'conceptDocuments') {
-        return [];
-      }
-      return response.answers;
-    });
-  }
-
-  private async fetchAllEntities(dungeonId: string): Promise<Map<string, any>> {
-    const query = `
-      match
-        $d isa dungeon, has id "${dungeonId}";
-        $r($d) isa dungeon-composition;
-        $r(room-in-dungeon: $room);
-        $c($room) isa containment;
-        $c(contained: $entity);
-        $entity isa $entity-type;
-      fetch {
-        "entity": { $entity.* },
-        "type": $entity-type
-      };
-    `;
-
-    return this.connectionService.executeReadQuery(query, (response: any) => {
-      const entityMap = new Map<string, any>();
-      if (response.answerType !== 'conceptDocuments') {
-        return entityMap;
-      }
-      for (const result of response.answers) {
-        const entityData = result.entity;
-        const entityType = result.type.label;
-        const entityName = entityData.name;
-
-        if (entityName) {
-          entityMap.set(entityName, {
-            ...entityData,
-            entityType,
-          });
-        }
-      }
-      return entityMap;
-    });
-  }
-
-  private async buildContainmentMap(
-    roomsData: any[],
-    entityMap: Map<string, any>
-  ): Promise<Map<string, Set<string>>> {
-    const containmentMap = new Map<string, Set<string>>();
-    const processedContainers = new Set<string>();
-    const pendingContainers = new Set<string>(roomsData.map((room) => room.name));
-
-    while (pendingContainers.size > 0) {
-      const currentContainers = Array.from(pendingContainers);
-      pendingContainers.clear();
-
-      for (const containerName of currentContainers) {
-        if (processedContainers.has(containerName)) continue;
-
-        const contained = await this.fetchContainedEntities(containerName);
-
-        if (contained.length > 0) {
-          containmentMap.set(
-            containerName,
-            new Set(contained.map((c) => c.name))
-          );
-
-          contained
-            .filter((c) => c.type === 'box-container' || c.type === 'room')
-            .forEach((c) => pendingContainers.add(c.name));
-        }
-
-        processedContainers.add(containerName);
-      }
-    }
-
-    return containmentMap;
-  }
-
-  private async fetchContainedEntities(
-    containerName: string
-  ): Promise<{ name: string; type: string }[]> {
-    const query = `
-      match
-        $container isa container, has name "${containerName}";
-        $c($container) isa containment;
-        $c(contained: $contained);
-        $contained isa $contained-type;
-      fetch {
-        "name": $contained.name,
-        "type": $contained-type
-      };
-    `;
-
-    return this.connectionService.executeReadQuery(query, (response: any) => {
-      if (response.answerType !== 'conceptDocuments') {
-        return [];
-      }
-      return response.answers.map((result: any) => ({
-        name: result.name as string,
-        type: result.type.label as string,
+      return response.answers.map((answer: any) => ({
+        id: answer.id as string,
+        name: answer.name as string,
       }));
     });
   }
 
-  private async buildRoom(
-    roomData: any,
+  async getDungeonGraph(dungeonId: string): Promise<DungeonGraph | null> {
+    // Query 1: Get dungeon structure with transitive containment
+    const structure = await this.fetchDungeonStructure(dungeonId);
+    if (!structure) return null;
+
+    // Query 2: Get all entity attributes and abilities in one query
+    const entityDetails = await this.fetchAllEntityDetails(structure.entityNames);
+
+    // Build the dungeon graph from structure and details
+    return this.buildDungeonFromStructure(structure, entityDetails);
+  }
+
+  /**
+   * Query 1: Fetch dungeon structure using transitive containment function
+   * Returns: dungeon metadata, rooms, and all containment relationships
+   */
+  private async fetchDungeonStructure(dungeonId: string): Promise<{
+    dungeon: { id: string; name: string; description?: string };
+    rooms: Array<{ name: string; description?: string }>;
+    containmentEdges: ContainmentEdge[];
+    entityNames: string[];
+  } | null> {
+    const query = `
+      match
+        $dungeon isa dungeon, has id "${dungeonId}";
+      fetch {
+        "dungeon": { $dungeon.* },
+        "rooms": [
+          match (dungeon: $dungeon, room-in-dungeon: $room) isa dungeon-composition;
+          fetch { $room.* };
+        ],
+        "containment": [
+          match
+            (dungeon: $dungeon, room-in-dungeon: $room) isa dungeon-composition;
+            let $parent, $contained in all_contents($room);
+            $contained isa! $contained_type;
+          fetch {
+            "container": $parent.name,
+            "contained": $contained.name,
+            "type": $contained_type
+          };
+        ]
+      };
+    `;
+
+    return this.connectionService.executeReadQuery(query, (response) => {
+      if (response.answerType !== 'conceptDocuments' || response.answers.length === 0) {
+        return null;
+      }
+
+      const result: any = response.answers[0];
+      const dungeon = {
+        id: result.dungeon.id as string,
+        name: result.dungeon.name as string,
+        description: result.dungeon.description as string | undefined,
+      };
+
+      const rooms = (result.rooms || []).map((r: any) => ({
+        name: r.name as string,
+        description: r.description as string | undefined,
+      }));
+
+      const containmentEdges: ContainmentEdge[] = (result.containment || []).map((c: any) => ({
+        containerName: c.container as string,
+        containedName: c.contained as string,
+        containedType: c.type.label as string,
+      }));
+
+      // Extract all unique entity names
+      const entityNames = Array.from(
+        new Set(containmentEdges.map((edge) => edge.containedName))
+      );
+
+      return { dungeon, rooms, containmentEdges, entityNames };
+    });
+  }
+
+  /**
+   * Query 2: Fetch all entity attributes and abilities in one query
+   * Uses 'or' pattern to match any entity name from the list
+   */
+  private async fetchAllEntityDetails(entityNames: string[]): Promise<Map<string, EntityAttributes>> {
+    if (entityNames.length === 0) {
+      return new Map();
+    }
+
+    // Build query with all entity names using 'or' pattern
+    const namePatterns = entityNames.map((name) => `$entity has name "${name}"`).join(';\n    } or {\n      ');
+
+    const query = `
+      match
+        $entity isa! $entity_type;
+        {
+          ${namePatterns};
+        };
+      fetch {
+        "name": $entity.name,
+        "type": $entity_type,
+        "attributes": { $entity.* },
+        "abilities": [
+          match
+            $entity isa creature;
+            (creature: $entity, ability: $ability) isa has-ability;
+            $ability isa $ability_type;
+          fetch {
+            "ability": { $ability.* },
+            "type": $ability_type
+          };
+        ]
+      };
+    `;
+
+    return this.connectionService.executeReadQuery(query, (response) => {
+      const entityMap = new Map<string, EntityAttributes>();
+
+      if (response.answerType !== 'conceptDocuments') {
+        return entityMap;
+      }
+
+      for (const result of response.answers as any[]) {
+        const name = result.name as string;
+        const entityType = result.type.label as string;
+        const attributes = result.attributes;
+        const abilities = result.abilities || [];
+
+        // Group abilities by type
+        const abilityMap = new Map<string, CreatureAbility[]>();
+        for (const abilityData of abilities) {
+          const abilityType = abilityData.type.label as string;
+          const ability: CreatureAbility = {
+            name: abilityData.ability.name as string,
+            description: abilityData.ability.description as string,
+            actionCost: abilityData.ability['action-cost'] as number | undefined,
+          };
+
+          if (!abilityMap.has(abilityType)) {
+            abilityMap.set(abilityType, []);
+          }
+          abilityMap.get(abilityType)!.push(ability);
+        }
+
+        entityMap.set(name, {
+          ...attributes,
+          entityType,
+          abilityMap,
+        });
+      }
+
+      return entityMap;
+    });
+  }
+
+  /**
+   * Build the dungeon graph from structure data and entity details
+   */
+  private buildDungeonFromStructure(
+    structure: {
+      dungeon: { id: string; name: string; description?: string };
+      rooms: Array<{ name: string; description?: string }>;
+      containmentEdges: ContainmentEdge[];
+      entityNames: string[];
+    },
+    entityDetails: Map<string, EntityAttributes>
+  ): DungeonGraph {
+    // Build containment map: container name -> set of contained entity names
+    const containmentMap = new Map<string, Set<string>>();
+    for (const edge of structure.containmentEdges) {
+      if (!containmentMap.has(edge.containerName)) {
+        containmentMap.set(edge.containerName, new Set());
+      }
+      containmentMap.get(edge.containerName)!.add(edge.containedName);
+    }
+
+    // Build rooms with their contents
+    const rooms: RoomData[] = structure.rooms.map((roomData) =>
+      this.buildRoom(roomData.name, roomData.description, containmentMap, entityDetails)
+    );
+
+    return {
+      id: structure.dungeon.id,
+      name: structure.dungeon.name,
+      description: structure.dungeon.description,
+      rooms,
+    };
+  }
+
+  private buildRoom(
+    roomName: string,
+    roomDescription: string | undefined,
     containmentMap: Map<string, Set<string>>,
-    entityMap: Map<string, any>
-  ): Promise<RoomData> {
-    const contained = containmentMap.get(roomData.name) || new Set<string>();
+    entityDetails: Map<string, EntityAttributes>
+  ): RoomData {
+    const contained = containmentMap.get(roomName) || new Set<string>();
 
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
 
     for (const entityName of contained) {
-      const entityData = entityMap.get(entityName);
+      const entityData = entityDetails.get(entityName);
       if (!entityData) continue;
 
-      const entityType = entityData.entityType;
+      const entityType = entityData['entityType'];
 
       if (entityType === 'monster' || entityType === 'npc' || entityType === 'pc') {
-        const creature = await this.parseCreatureFromEntity(entityData, entityName, entityType);
+        const creature = this.parseCreatureFromEntity(entityData, entityType);
         if (creature) creatures.push(creature);
       } else if (entityType === 'item' || entityType === 'magic-item') {
         const item = this.parseItemFromEntity(entityData, entityType);
         if (item) items.push(item);
       } else if (entityType === 'box-container') {
-        const container = await this.buildContainer(entityData, containmentMap, entityMap);
+        const container = this.buildContainer(
+          entityName,
+          entityData,
+          containmentMap,
+          entityDetails
+        );
         if (container) containers.push(container);
       }
     }
 
     return {
-      name: roomData.name,
-      description: roomData.description,
+      name: roomName,
+      description: roomDescription,
       creatures,
       items,
       containers,
     };
   }
 
-  private async buildContainer(
-    containerData: any,
+  private buildContainer(
+    containerName: string,
+    containerData: EntityAttributes,
     containmentMap: Map<string, Set<string>>,
-    entityMap: Map<string, any>
-  ): Promise<ContainerData | null> {
-    const containerName = containerData.name;
-    if (!containerName) return null;
-
+    entityDetails: Map<string, EntityAttributes>
+  ): ContainerData | null {
     const contained = containmentMap.get(containerName) || new Set<string>();
 
     const creatures: CreatureData[] = [];
@@ -248,19 +293,24 @@ export class TypeDBQueryService {
     const containers: ContainerData[] = [];
 
     for (const entityName of contained) {
-      const entityData = entityMap.get(entityName);
+      const entityData = entityDetails.get(entityName);
       if (!entityData) continue;
 
-      const entityType = entityData.entityType;
+      const entityType = entityData['entityType'];
 
       if (entityType === 'monster' || entityType === 'npc' || entityType === 'pc') {
-        const creature = await this.parseCreatureFromEntity(entityData, entityName, entityType);
+        const creature = this.parseCreatureFromEntity(entityData, entityType);
         if (creature) creatures.push(creature);
       } else if (entityType === 'item' || entityType === 'magic-item') {
         const item = this.parseItemFromEntity(entityData, entityType);
         if (item) items.push(item);
       } else if (entityType === 'box-container') {
-        const nestedContainer = await this.buildContainer(entityData, containmentMap, entityMap);
+        const nestedContainer = this.buildContainer(
+          entityName,
+          entityData,
+          containmentMap,
+          entityDetails
+        );
         if (nestedContainer) containers.push(nestedContainer);
       }
     }
@@ -268,26 +318,25 @@ export class TypeDBQueryService {
     return {
       type: 'box-container',
       name: containerName,
-      description: containerData.description,
+      description: containerData['description'] as string | undefined,
       creatures,
       items,
       containers,
     };
   }
 
-  private async parseCreatureFromEntity(
-    entity: any,
-    creatureName: string,
+  private parseCreatureFromEntity(
+    entity: EntityAttributes,
     entityType: string
-  ): Promise<CreatureData | null> {
-    const name = entity.name as string;
-    const description = entity.description as string | undefined;
-    const level = entity.level as number | undefined;
+  ): CreatureData | null {
+    const name = entity['name'] as string;
+    const description = entity['description'] as string | undefined;
+    const level = entity['level'] as number | undefined;
     const hitPoints = entity['hit-points'] as number | undefined;
     const armorClass = entity['armor-class'] as number | undefined;
-    const alignment = entity.alignment as Alignment | undefined;
+    const alignment = entity['alignment'] as Alignment | undefined;
 
-    const statblock = await this.buildStatblock(entity, creatureName);
+    const statblock = this.buildStatblock(entity);
 
     if (entityType === 'monster') {
       return {
@@ -328,13 +377,13 @@ export class TypeDBQueryService {
     return null;
   }
 
-  private parseItemFromEntity(entity: any, entityType: string): ItemData | null {
-    const name = entity.name;
-    const description = entity.description;
+  private parseItemFromEntity(entity: EntityAttributes, entityType: string): ItemData | null {
+    const name = entity['name'] as string;
+    const description = entity['description'] as string | undefined;
 
     if (entityType === 'magic-item') {
-      const rarity = entity.rarity as Rarity | undefined;
-      const requiresAttunement = entity['requires-attunement'];
+      const rarity = entity['rarity'] as Rarity | undefined;
+      const requiresAttunement = entity['requires-attunement'] as boolean | undefined;
 
       return {
         type: 'magic-item',
@@ -352,45 +401,37 @@ export class TypeDBQueryService {
     }
   }
 
-  private async buildStatblock(entity: any, creatureName: string): Promise<StatblockData | null> {
-    const requiredStats = [
-      'strength',
-      'dexterity',
-      'constitution',
-      'intelligence',
-      'wisdom',
-      'charisma',
-    ];
+  private buildStatblock(entity: EntityAttributes): StatblockData | null {
+    const requiredStats = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
 
     for (const stat of requiredStats) {
-      if (!entity[stat] || entity[stat].length === 0) return null;
+      if (entity[stat] === undefined || entity[stat] === null) return null;
     }
 
-    if (!entity.size || entity.size.length === 0) return null;
-    if (!entity['creature-type'] || entity['creature-type'].length === 0) return null;
+    if (!entity['size'] || !entity['creature-type']) return null;
 
-    const abilityMap = await this.queryCreatureAbilities(creatureName);
+    const abilityMap = entity['abilityMap'] as Map<string, CreatureAbility[]>;
 
     const parseListAttribute = (key: string): string[] => {
       const value = entity[key];
       if (!value) return [];
-      return Array.isArray(value) ? value.map((v: any) => v.value as string) : [];
+      return Array.isArray(value) ? value : [value];
     };
 
-    const wisdom = entity.wisdom as number;
+    const wisdom = entity['wisdom'] as number;
     const passivePerception =
       entity['passive-perception'] || 10 + Math.floor((wisdom - 10) / 2);
 
     return {
       abilityScores: {
-        strength: entity.strength as number,
-        dexterity: entity.dexterity as number,
-        constitution: entity.constitution as number,
-        intelligence: entity.intelligence as number,
+        strength: entity['strength'] as number,
+        dexterity: entity['dexterity'] as number,
+        constitution: entity['constitution'] as number,
+        intelligence: entity['intelligence'] as number,
         wisdom: wisdom,
-        charisma: entity.charisma as number,
+        charisma: entity['charisma'] as number,
       },
-      size: entity.size as CreatureSize,
+      size: entity['size'] as CreatureSize,
       type: entity['creature-type'] as CreatureType,
       challengeRating: entity['challenge-rating'] as string | undefined,
       experiencePoints: entity['experience-points'] as number | undefined,
@@ -437,55 +478,13 @@ export class TypeDBQueryService {
       senses: parseListAttribute('sense'),
       languages: parseListAttribute('language'),
       passivePerception,
-      traits: abilityMap.get('trait') || [],
-      actions: abilityMap.get('action') || [],
-      bonusActions: abilityMap.get('bonus-action') || [],
-      reactions: abilityMap.get('reaction') || [],
-      legendaryActions: abilityMap.get('legendary-action') || [],
-      lairActions: abilityMap.get('lair-action') || [],
-      mythicActions: abilityMap.get('mythic-action') || [],
+      traits: abilityMap?.get('trait') || [],
+      actions: abilityMap?.get('action') || [],
+      bonusActions: abilityMap?.get('bonus-action') || [],
+      reactions: abilityMap?.get('reaction') || [],
+      legendaryActions: abilityMap?.get('legendary-action') || [],
+      lairActions: abilityMap?.get('lair-action') || [],
+      mythicActions: abilityMap?.get('mythic-action') || [],
     };
-  }
-
-  private async queryCreatureAbilities(
-    creatureName: string
-  ): Promise<Map<string, CreatureAbility[]>> {
-    const query = `
-      match
-        $c isa creature, has name "${creatureName}";
-        $r($c) isa has-ability;
-        $r(ability: $a);
-        $a isa $ability-type;
-      fetch {
-        "ability": { $a.* },
-        "type": $ability-type
-      };
-    `;
-
-    return this.connectionService.executeReadQuery(query, (response: any) => {
-      const abilityMap = new Map<string, CreatureAbility[]>();
-
-      if (response.answerType !== 'conceptDocuments') {
-        return abilityMap;
-      }
-
-      for (const result of response.answers) {
-        const abilityType = result.type.label as string;
-        const abilityData = result.ability;
-
-        const ability: CreatureAbility = {
-          name: abilityData.name as string,
-          description: abilityData.description as string,
-          actionCost: abilityData['action-cost'] as number | undefined,
-        };
-
-        if (!abilityMap.has(abilityType)) {
-          abilityMap.set(abilityType, []);
-        }
-        abilityMap.get(abilityType)!.push(ability);
-      }
-
-      return abilityMap;
-    });
   }
 }

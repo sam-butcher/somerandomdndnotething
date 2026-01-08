@@ -101,14 +101,13 @@ attribute action-cost, value integer;
 # Entity Types - Creatures
 # ============================================================================
 
-entity creature @abstract,
+entity creature @abstract, sub containable,
     owns name,
     owns description,
     owns level,
     owns hit-points,
     owns armor-class,
     owns alignment,
-    plays containment:contained,
     plays has-ability:creature;
 
 entity statblock-creature @abstract, sub creature,
@@ -171,11 +170,13 @@ entity pc, sub creature;
 # Entity Types - Containers
 # ============================================================================
 
-entity container @abstract,
+entity containable @abstract,
+    plays containment:contained;
+
+entity container @abstract, sub containable,
     owns name,
     owns description,
-    plays containment:container,
-    plays containment:contained;
+    plays containment:container;
 
 entity room, sub container,
     plays dungeon-composition:room-in-dungeon;
@@ -192,10 +193,9 @@ entity dungeon,
     owns description,
     plays dungeon-composition:dungeon;
 
-entity item,
+entity item, sub containable,
     owns name,
-    owns description,
-    plays containment:contained;
+    owns description;
 
 entity magic-item, sub item,
     owns requires-attunement,
@@ -234,3 +234,21 @@ relation dungeon-composition,
 relation has-ability,
     relates creature,
     relates ability;
+
+# ============
+# Functions
+# ============
+
+fun all_contents($container: container) -> { container, containable }:
+  match
+    $contained isa! $type;
+    {
+      (container: $container, contained: $contained) isa containment;
+      $parent isa container;
+      $parent is $container;
+    } or {
+      (container: $container, contained: $intermediate) isa containment;
+      $intermediate isa container;
+      let $parent, $contained in all_contents($intermediate);
+    };
+  return { $parent, $contained };
