@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DungeonService } from '../../services/dungeon.service';
 import { CreatureStatblock } from '../creature-statblock/creature-statblock';
+import { ContainerDisplay } from '../container-display/container-display.component';
 import {
   DungeonGraph,
   DungeonSummary,
@@ -16,7 +17,7 @@ import {
 
 @Component({
   selector: 'app-dungeon-viewer',
-  imports: [CommonModule, FormsModule, CreatureStatblock],
+  imports: [CommonModule, FormsModule, CreatureStatblock, ContainerDisplay],
   templateUrl: './dungeon-viewer.component.html',
   styleUrl: './dungeon-viewer.component.css'
 })
