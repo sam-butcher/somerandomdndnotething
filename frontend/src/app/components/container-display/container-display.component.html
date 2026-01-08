@@ -47,7 +47,7 @@
                     }
                     @if (creature.type === 'npc' && creature.isFriendly !== null) {
                       <span class="stat" [class.friendly]="creature.isFriendly">
-                        {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
+                        {{ creature.isFriendly ? 'Friendly' : 'Hostile' }}
                       </span>
                     }
                   </div>
@@ -63,8 +63,8 @@
         <div class="nested-items">
           @for (item of container.items; track item.name) {
             <div class="item-item" [class]="'item-' + item.type">
-              <span class="icon">{{ getItemIcon(item) }}</span>
               <div class="item-details">
+                <span class="icon">{{ getItemIcon(item) }}</span>
                 <strong class="item-name">{{ item.name }}</strong>
                 @if (item.description) {
                   <p class="item-description">{{ item.description }}</p>

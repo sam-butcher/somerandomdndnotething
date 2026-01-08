@@ -167,19 +167,11 @@ export class DungeonViewer implements OnInit {
   // Helper methods for template
   getCreatureIcon(creature: CreatureData): string {
     switch (creature.type) {
-      case 'monster': return '⚔️';
-      case 'npc': return '👤';
-      case 'pc': return '⭐';
-      default: return '❓';
+      case 'monster': return '[M]';
+      case 'npc': return '[N]';
+      case 'pc': return '[P]';
+      default: return '[?]';
     }
-  }
-
-  getItemIcon(item: ItemData): string {
-    return item.type === 'magic-item' ? '✨' : '📦';
-  }
-
-  getContainerIcon(): string {
-    return '🎁';
   }
 
   getRarityClass(rarity?: Rarity): string {

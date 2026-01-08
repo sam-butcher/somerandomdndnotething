@@ -25,7 +25,7 @@
   <!-- Error Display -->
   @if (error()) {
     <div class="error-panel parchment-panel">
-      <strong>⚠️ Error:</strong> {{ error() }}
+      <strong>Error:</strong> {{ error() }}
     </div>
   }
 
@@ -38,15 +38,15 @@
         <span class="filter-label">Creatures:</span>
         <label class="filter-checkbox">
           <input type="checkbox" [(ngModel)]="filterMonster" />
-          <span>⚔️ Monsters</span>
+          <span>Monsters</span>
         </label>
         <label class="filter-checkbox">
           <input type="checkbox" [(ngModel)]="filterNPC" />
-          <span>👤 NPCs</span>
+          <span>NPCs</span>
         </label>
         <label class="filter-checkbox">
           <input type="checkbox" [(ngModel)]="filterPC" />
-          <span>⭐ PCs</span>
+          <span>PCs</span>
         </label>
       </div>
 
@@ -54,11 +54,11 @@
         <span class="filter-label">Items:</span>
         <label class="filter-checkbox">
           <input type="checkbox" [(ngModel)]="filterRegularItem" />
-          <span>📦 Regular</span>
+          <span>Regular</span>
         </label>
         <label class="filter-checkbox">
           <input type="checkbox" [(ngModel)]="filterMagicItem" />
-          <span>✨ Magic</span>
+          <span>Magic</span>
         </label>
       </div>
 
@@ -145,7 +145,7 @@
                                 }
                                 @if (creature.type === 'npc' && creature.isFriendly !== null) {
                                   <span class="stat" [class.friendly]="creature.isFriendly">
-                                    {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
+                                    {{ creature.isFriendly ? 'Friendly' : 'Hostile' }}
                                   </span>
                                 }
                               </div>
@@ -164,7 +164,6 @@
                     <div class="items-list">
                       @for (item of room.items; track item.name) {
                         <div class="item-item" [class]="'item-' + item.type">
-                          <span class="icon">{{ getItemIcon(item) }}</span>
                           <div class="item-details">
                             <strong class="item-name">{{ item.name }}</strong>
                             @if (item.description) {

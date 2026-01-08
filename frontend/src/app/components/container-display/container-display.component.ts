@@ -32,19 +32,19 @@ export class ContainerDisplay {
 
   getCreatureIcon(creature: CreatureData): string {
     switch (creature.type) {
-      case 'monster': return '⚔️';
-      case 'npc': return '👤';
-      case 'pc': return '⭐';
-      default: return '❓';
+      case 'monster': return '[M]';
+      case 'npc': return '[N]';
+      case 'pc': return '[P]';
+      default: return '[?]';
     }
   }
 
   getItemIcon(item: ItemData): string {
-    return item.type === 'magic-item' ? '✨' : '📦';
+    return item.type === 'magic-item' ? '[*]' : '[I]';
   }
 
   getContainerIcon(): string {
-    return '🎁';
+    return '[C]';
   }
 
   getRarityClass(rarity?: Rarity): string {
