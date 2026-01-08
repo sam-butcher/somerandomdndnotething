@@ -1,7 +1,6 @@
 <div class="container-panel">
   <div class="container-header" (click)="toggleExpanded()">
     <span class="expand-icon">{{ isExpanded ? '▼' : '▶' }}</span>
-    <span class="icon">{{ getContainerIcon() }}</span>
     <strong class="container-name">{{ container.name }}</strong>
   </div>
 
@@ -13,81 +12,87 @@
 
       <!-- Creatures in this container -->
       @if (container.creatures && container.creatures.length > 0) {
-        <div class="nested-creatures">
-          @for (creature of container.creatures; track creature.name) {
-            <div class="creature-item" [class]="'creature-' + creature.type">
-              <span class="icon">{{ getCreatureIcon(creature) }}</span>
-              <div class="creature-details">
-                <strong class="creature-name">{{ creature.name }}</strong>
-                @if (creature.description) {
-                  <p class="creature-description">{{ creature.description }}</p>
-                }
+        <div class="content-section">
+          <h4 class="section-title">Creatures</h4>
+          <div class="creatures-list">
+            @for (creature of container.creatures; track creature.name) {
+              <div class="creature-item" [class]="'creature-' + creature.type">
+                <span class="icon">{{ getCreatureIcon(creature) }}</span>
+                <div class="creature-details">
+                  <strong class="creature-name">{{ creature.name }}</strong>
+                  @if (creature.description) {
+                    <p class="creature-description">{{ creature.description }}</p>
+                  }
 
-                @if ((creature.type === 'monster' || creature.type === 'npc') && creature.statblock) {
-                  <app-creature-statblock
-                    [statblock]="creature.statblock"
-                    [creatureName]="creature.name"
-                    [hitPoints]="creature.hitPoints"
-                    [armorClass]="creature.armorClass"
-                    [alignment]="creature.alignment"
-                  />
-                } @else {
-                  <div class="creature-stats">
-                    @if (creature.level) {
-                      <span class="stat">Level: {{ creature.level }}</span>
-                    }
-                    @if (creature.hitPoints) {
-                      <span class="stat">HP: {{ creature.hitPoints }}</span>
-                    }
-                    @if (creature.armorClass) {
-                      <span class="stat">AC: {{ creature.armorClass }}</span>
-                    }
-                    @if (creature.alignment) {
-                      <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
-                    }
-                    @if (creature.type === 'npc' && creature.isFriendly !== null) {
-                      <span class="stat" [class.friendly]="creature.isFriendly">
-                        {{ creature.isFriendly ? 'Friendly' : 'Hostile' }}
-                      </span>
-                    }
-                  </div>
-                }
+                  @if ((creature.type === 'monster' || creature.type === 'npc') && creature.statblock) {
+                    <app-creature-statblock
+                      [statblock]="creature.statblock"
+                      [creatureName]="creature.name"
+                      [hitPoints]="creature.hitPoints"
+                      [armorClass]="creature.armorClass"
+                      [alignment]="creature.alignment"
+                    />
+                  } @else {
+                    <div class="creature-stats">
+                      @if (creature.level) {
+                        <span class="stat">Level: {{ creature.level }}</span>
+                      }
+                      @if (creature.hitPoints) {
+                        <span class="stat">HP: {{ creature.hitPoints }}</span>
+                      }
+                      @if (creature.armorClass) {
+                        <span class="stat">AC: {{ creature.armorClass }}</span>
+                      }
+                      @if (creature.alignment) {
+                        <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
+                      }
+                      @if (creature.type === 'npc' && creature.isFriendly !== null) {
+                        <span class="stat" [class.friendly]="creature.isFriendly">
+                          {{ creature.isFriendly ? 'Friendly' : 'Hostile' }}
+                        </span>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </div>
-          }
+            }
+          </div>
         </div>
       }
 
       <!-- Items in this container -->
       @if (container.items && container.items.length > 0) {
-        <div class="nested-items">
-          @for (item of container.items; track item.name) {
-            <div class="item-item" [class]="'item-' + item.type">
-              <div class="item-details">
-                <span class="icon">{{ getItemIcon(item) }}</span>
-                <strong class="item-name">{{ item.name }}</strong>
-                @if (item.description) {
-                  <p class="item-description">{{ item.description }}</p>
-                }
-                @if (item.type === 'magic-item') {
-                  <div class="item-stats">
-                    @if (item.rarity) {
-                      <span class="stat" [class]="getRarityClass(item.rarity)">{{ item.rarity }}</span>
-                    }
-                    @if (item.requiresAttunement) {
-                      <span class="stat attunement">Requires Attunement</span>
-                    }
-                  </div>
-                }
+        <div class="content-section">
+          <h4 class="section-title">Items</h4>
+          <div class="items-list">
+            @for (item of container.items; track item.name) {
+              <div class="item-item" [class]="'item-' + item.type">
+                <div class="item-details">
+                  <strong class="item-name">{{ item.name }}</strong>
+                  @if (item.description) {
+                    <p class="item-description">{{ item.description }}</p>
+                  }
+                  @if (item.type === 'magic-item') {
+                    <div class="item-stats">
+                      @if (item.rarity) {
+                        <span class="stat" [class]="getRarityClass(item.rarity)">{{ item.rarity }}</span>
+                      }
+                      @if (item.requiresAttunement) {
+                        <span class="stat attunement">Requires Attunement</span>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
-            </div>
-          }
+            }
+          </div>
         </div>
       }
 
       <!-- Nested containers (RECURSIVE!) -->
       @if (container.containers && container.containers.length > 0) {
-        <div class="nested-containers">
+        <div class="content-section">
+          <h4 class="section-title">Containers</h4>
           @for (nestedContainer of container.containers; track $index) {
             <app-container-display
               [container]="nestedContainer"

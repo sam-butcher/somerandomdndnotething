@@ -39,14 +39,6 @@ export class ContainerDisplay {
     }
   }
 
-  getItemIcon(item: ItemData): string {
-    return item.type === 'magic-item' ? '[*]' : '[I]';
-  }
-
-  getContainerIcon(): string {
-    return '[C]';
-  }
-
   getRarityClass(rarity?: Rarity): string {
     if (!rarity) return '';
     switch (rarity) {
