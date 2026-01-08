@@ -256,12 +256,30 @@ class TypeDBService(
 
     private fun buildStatblock(tx: Transaction, entity: JsonObject, creatureName: String): StatblockData? {
         // Check required fields
-        val str = entity["strength"]?.jsonPrimitive?.longOrNull ?: return null
-        val dex = entity["dexterity"]?.jsonPrimitive?.longOrNull ?: return null
-        val con = entity["constitution"]?.jsonPrimitive?.longOrNull ?: return null
-        val int = entity["intelligence"]?.jsonPrimitive?.longOrNull ?: return null
-        val wis = entity["wisdom"]?.jsonPrimitive?.longOrNull ?: return null
-        val cha = entity["charisma"]?.jsonPrimitive?.longOrNull ?: return null
+        val str = entity["strength"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing strength for creature: $creatureName")
+            return null
+        }
+        val dex = entity["dexterity"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing dexterity for creature: $creatureName")
+            return null
+        }
+        val con = entity["constitution"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing constitution for creature: $creatureName")
+            return null
+        }
+        val int = entity["intelligence"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing intelligence for creature: $creatureName")
+            return null
+        }
+        val wis = entity["wisdom"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing wisdom for creature: $creatureName")
+            return null
+        }
+        val cha = entity["charisma"]?.jsonPrimitive?.longOrNull ?: run {
+            logger.debug("Missing charisma for creature: $creatureName")
+            return null
+        }
 
         val size = CreatureSize.fromString(entity["size"]?.jsonPrimitive?.contentOrNull) ?: return null
         val type = CreatureType.fromString(entity["creature-type"]?.jsonPrimitive?.contentOrNull) ?: return null
@@ -269,9 +287,15 @@ class TypeDBService(
         val profBonus = entity["proficiency-bonus"]?.jsonPrimitive?.longOrNull ?: 2
         val passivePerception = entity["passive-perception"]?.jsonPrimitive?.longOrNull ?: (10 + (wis - 10) / 2)
 
-        // Parse comma-separated lists
-        fun parseList(value: String?): List<String> =
-            value?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
+        // Parse multi-valued attributes (returned as JSON arrays)
+        fun parseListAttribute(key: String): List<String> {
+            val value = entity[key]
+            return when {
+                value is JsonArray -> value.mapNotNull { it.jsonPrimitive.contentOrNull }
+                value?.jsonPrimitive?.contentOrNull != null -> listOf(value.jsonPrimitive.content)
+                else -> emptyList()
+            }
+        }
 
         val abilityMap = queryCreatureAbilities(tx, creatureName)
 
@@ -317,12 +341,12 @@ class TypeDBService(
                 stealth = entity["skill-stealth"]?.jsonPrimitive?.longOrNull,
                 survival = entity["skill-survival"]?.jsonPrimitive?.longOrNull
             ),
-            damageResistances = parseList(entity["damage-resistances"]?.jsonPrimitive?.contentOrNull),
-            damageImmunities = parseList(entity["damage-immunities"]?.jsonPrimitive?.contentOrNull),
-            conditionImmunities = parseList(entity["condition-immunities"]?.jsonPrimitive?.contentOrNull),
-            damageVulnerabilities = parseList(entity["damage-vulnerabilities"]?.jsonPrimitive?.contentOrNull),
-            senses = parseList(entity["senses"]?.jsonPrimitive?.contentOrNull),
-            languages = parseList(entity["languages"]?.jsonPrimitive?.contentOrNull),
+            damageResistances = parseListAttribute("damage-resistance"),
+            damageImmunities = parseListAttribute("damage-immunity"),
+            conditionImmunities = parseListAttribute("condition-immunity"),
+            damageVulnerabilities = parseListAttribute("damage-vulnerability"),
+            senses = parseListAttribute("sense"),
+            languages = parseListAttribute("language"),
             passivePerception = passivePerception,
             traits = abilityMap["trait"] ?: emptyList(),
             actions = abilityMap["action"] ?: emptyList(),
@@ -430,7 +454,7 @@ class TypeDBService(
             "monster" -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment, statblock)
             "npc" -> CreatureData.NPC(name, description, level, hitPoints, armorClass, alignment, isFriendly, statblock)
             "pc" -> CreatureData.PC(name, description, level, hitPoints, armorClass, alignment)
-            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment, statblock)
+            else -> CreatureData.Monster(name, description, level, hitPoints, armorClass, alignment, null)
         }
     }
 

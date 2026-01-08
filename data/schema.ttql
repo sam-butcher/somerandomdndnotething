@@ -34,12 +34,12 @@ attribute rarity, value string @values(
 );
 
 # Ability Scores
-attribute strength, value integer @range(1, 30);
-attribute dexterity, value integer @range(1, 30);
-attribute constitution, value integer @range(1, 30);
-attribute intelligence, value integer @range(1, 30);
-attribute wisdom, value integer @range(1, 30);
-attribute charisma, value integer @range(1, 30);
+attribute strength, value integer @range(1..30);
+attribute dexterity, value integer @range(1..30);
+attribute constitution, value integer @range(1..30);
+attribute intelligence, value integer @range(1..30);
+attribute wisdom, value integer @range(1..30);
+attribute charisma, value integer @range(1..30);
 
 # Combat Stats
 attribute challenge-rating, value string;
@@ -58,13 +58,13 @@ attribute speed-climb, value integer;
 attribute size, value string @values("Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan");
 attribute creature-type, value string @values("Aberration", "Beast", "Celestial", "Construct", "Dragon", "Elemental", "Fey", "Fiend", "Giant", "Humanoid", "Monstrosity", "Ooze", "Plant", "Undead");
 
-# Lists (comma-separated strings)
-attribute damage-resistances, value string;
-attribute damage-immunities, value string;
-attribute condition-immunities, value string;
-attribute damage-vulnerabilities, value string;
-attribute languages, value string;
-attribute senses, value string;
+# Multi-valued attributes
+attribute damage-resistance, value string;
+attribute damage-immunity, value string;
+attribute condition-immunity, value string;
+attribute damage-vulnerability, value string;
+attribute language, value string;
+attribute sense, value string;
 
 # Saving Throws
 attribute save-strength, value integer;
@@ -129,12 +129,12 @@ entity statblock-creature @abstract, sub creature,
     owns speed-climb,
     owns size,
     owns creature-type,
-    owns damage-resistances,
-    owns damage-immunities,
-    owns condition-immunities,
-    owns damage-vulnerabilities,
-    owns languages,
-    owns senses,
+    owns damage-resistance @card(0..),
+    owns damage-immunity @card(0..),
+    owns condition-immunity @card(0..),
+    owns damage-vulnerability @card(0..),
+    owns language @card(0..),
+    owns sense @card(0..),
     owns save-strength,
     owns save-dexterity,
     owns save-constitution,
