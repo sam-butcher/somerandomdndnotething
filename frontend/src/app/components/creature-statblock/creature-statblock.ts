@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatblockData, Alignment } from '../../models/dungeon.models';
 
@@ -15,6 +15,14 @@ export class CreatureStatblock {
   readonly hitPoints = input<number | undefined>();
   readonly armorClass = input<number | undefined>();
   readonly alignment = input<Alignment | undefined>();
+
+  // Collapse state
+  protected readonly isCollapsed = signal(true);
+
+  // Toggle collapse state
+  toggleCollapse(): void {
+    this.isCollapsed.set(!this.isCollapsed());
+  }
 
   // Calculate ability modifier from ability score
   getAbilityModifier(score: number): string {
