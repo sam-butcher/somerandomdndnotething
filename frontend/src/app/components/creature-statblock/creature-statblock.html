@@ -57,24 +57,24 @@
     @if (formatSkills(statblock().skills); as skills) {
       <p><strong>Skills</strong> {{ skills }}</p>
     }
-    @if (statblock().damageVulnerabilities.length > 0) {
+    @if (statblock().damageVulnerabilities && statblock().damageVulnerabilities.length > 0) {
       <p><strong>Damage Vulnerabilities</strong> {{ statblock().damageVulnerabilities.join(', ') }}</p>
     }
-    @if (statblock().damageResistances.length > 0) {
+    @if (statblock().damageResistances && statblock().damageResistances.length > 0) {
       <p><strong>Damage Resistances</strong> {{ statblock().damageResistances.join(', ') }}</p>
     }
-    @if (statblock().damageImmunities.length > 0) {
+    @if (statblock().damageImmunities && statblock().damageImmunities.length > 0) {
       <p><strong>Damage Immunities</strong> {{ statblock().damageImmunities.join(', ') }}</p>
     }
-    @if (statblock().conditionImmunities.length > 0) {
+    @if (statblock().conditionImmunities && statblock().conditionImmunities.length > 0) {
       <p><strong>Condition Immunities</strong> {{ statblock().conditionImmunities.join(', ') }}</p>
     }
-    @if (statblock().senses.length > 0) {
+    @if (statblock().senses && statblock().senses.length > 0) {
       <p><strong>Senses</strong> {{ statblock().senses.join(', ') }}, passive Perception {{ statblock().passivePerception }}</p>
     } @else {
       <p><strong>Senses</strong> passive Perception {{ statblock().passivePerception }}</p>
     }
-    @if (statblock().languages.length > 0) {
+    @if (statblock().languages && statblock().languages.length > 0) {
       <p><strong>Languages</strong> {{ statblock().languages.join(', ') }}</p>
     } @else {
       <p><strong>Languages</strong> —</p>
@@ -86,12 +86,12 @@
   </div>
 
   <!-- Divider -->
-  @if (statblock().traits.length > 0 || statblock().actions.length > 0 || statblock().bonusActions.length > 0 || statblock().reactions.length > 0 || statblock().legendaryActions.length > 0 || statblock().lairActions.length > 0 || statblock().mythicActions.length > 0) {
+  @if ((statblock().traits && statblock().traits.length > 0) || (statblock().actions && statblock().actions.length > 0) || (statblock().bonusActions && statblock().bonusActions.length > 0) || (statblock().reactions && statblock().reactions.length > 0) || (statblock().legendaryActions && statblock().legendaryActions.length > 0) || (statblock().lairActions && statblock().lairActions.length > 0) || (statblock().mythicActions && statblock().mythicActions.length > 0)) {
     <div class="statblock-divider"></div>
   }
 
   <!-- Traits -->
-  @if (statblock().traits.length > 0) {
+  @if (statblock().traits && statblock().traits.length > 0) {
     <div class="statblock-section">
       @for (trait of statblock().traits; track trait.name) {
         <div class="ability-block">
@@ -102,7 +102,7 @@
   }
 
   <!-- Actions -->
-  @if (statblock().actions.length > 0) {
+  @if (statblock().actions && statblock().actions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Actions</h4>
@@ -115,7 +115,7 @@
   }
 
   <!-- Bonus Actions -->
-  @if (statblock().bonusActions.length > 0) {
+  @if (statblock().bonusActions && statblock().bonusActions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Bonus Actions</h4>
@@ -128,7 +128,7 @@
   }
 
   <!-- Reactions -->
-  @if (statblock().reactions.length > 0) {
+  @if (statblock().reactions && statblock().reactions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Reactions</h4>
@@ -141,7 +141,7 @@
   }
 
   <!-- Legendary Actions -->
-  @if (statblock().legendaryActions.length > 0) {
+  @if (statblock().legendaryActions && statblock().legendaryActions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Legendary Actions</h4>
@@ -157,7 +157,7 @@
   }
 
   <!-- Lair Actions -->
-  @if (statblock().lairActions.length > 0) {
+  @if (statblock().lairActions && statblock().lairActions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Lair Actions</h4>
@@ -170,7 +170,7 @@
   }
 
   <!-- Mythic Actions -->
-  @if (statblock().mythicActions.length > 0) {
+  @if (statblock().mythicActions && statblock().mythicActions.length > 0) {
     <div class="statblock-divider"></div>
     <div class="statblock-section">
       <h4 class="section-heading">Mythic Actions</h4>
