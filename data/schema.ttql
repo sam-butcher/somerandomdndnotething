@@ -1,0 +1,77 @@
+define
+
+# ============================================================================
+# Attribute Types
+# ============================================================================
+
+attribute name, value string;
+attribute description, value string;
+attribute level, value integer;
+attribute hit-points, value integer;
+attribute armor-class, value integer;
+attribute is-friendly, value boolean;
+attribute is-magical, value boolean;
+attribute capacity, value integer;
+
+# ============================================================================
+# Entity Types - Creatures
+# ============================================================================
+
+entity creature @abstract,
+    owns name,
+    owns description,
+    owns level,
+    owns hit-points,
+    owns armor-class,
+    plays containment:contained;
+
+entity monster, sub creature;
+
+entity npc, sub creature,
+    owns is-friendly;
+
+entity pc, sub creature;
+
+# ============================================================================
+# Entity Types - Containers
+# ============================================================================
+
+entity container @abstract,
+    owns name,
+    owns description,
+    owns capacity,
+    plays containment:container,
+    plays containment:contained;
+
+entity room, sub container,
+    plays dungeon-composition:room-in-dungeon;
+
+entity box-container, sub container;
+
+# ============================================================================
+# Entity Types - Dungeons and Items
+# ============================================================================
+
+entity dungeon,
+    owns name,
+    owns description,
+    plays dungeon-composition:dungeon;
+
+entity item,
+    owns name,
+    owns description,
+    plays containment:contained;
+
+entity magic-item, sub item;
+
+# ============================================================================
+# Relation Types
+# ============================================================================
+
+relation containment,
+    relates container,
+    relates contained;
+
+relation dungeon-composition,
+    relates dungeon,
+    relates room-in-dungeon;
