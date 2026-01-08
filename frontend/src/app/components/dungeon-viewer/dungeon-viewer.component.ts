@@ -1,0 +1,168 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DungeonService } from '../../services/dungeon.service';
+import {
+  DungeonGraph,
+  RoomData,
+  CreatureData,
+  ItemData,
+  ContainerData
+} from '../../models/dungeon.models';
+
+@Component({
+  selector: 'app-dungeon-viewer',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './dungeon-viewer.component.html',
+  styleUrl: './dungeon-viewer.component.css'
+})
+export class DungeonViewer {
+  private readonly dungeonService = inject(DungeonService);
+
+  // State signals
+  protected readonly dungeonName = signal('');
+  protected readonly dungeon = signal<DungeonGraph | null>(null);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
+
+  // Filter signals
+  protected readonly filterMonster = signal(true);
+  protected readonly filterNPC = signal(true);
+  protected readonly filterPC = signal(true);
+  protected readonly filterRegularItem = signal(true);
+  protected readonly filterMagicItem = signal(true);
+  protected readonly searchText = signal('');
+
+  // Expand/collapse state
+  protected readonly expandedRooms = signal(new Set<number>());
+  protected readonly expandedContainers = signal(new Map<string, boolean>());
+
+  // Computed filtered dungeon
+  protected readonly filteredDungeon = computed(() => {
+    const dung = this.dungeon();
+    if (!dung) return null;
+
+    const searchLower = this.searchText().toLowerCase();
+
+    return {
+      ...dung,
+      rooms: dung.rooms.map((room, roomIndex) => this.filterRoom(room, roomIndex, searchLower))
+    };
+  });
+
+  searchDungeon(): void {
+    const name = this.dungeonName().trim();
+    if (!name) {
+      this.error.set('Please enter a dungeon name');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+    this.dungeon.set(null);
+
+    this.dungeonService.getDungeon(name).subscribe({
+      next: (data) => {
+        this.dungeon.set(data);
+        this.loading.set(false);
+        // Expand first room by default
+        if (data.rooms.length > 0) {
+          this.expandedRooms.set(new Set([0]));
+        }
+      },
+      error: (err) => {
+        this.error.set(err.message);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  toggleRoom(index: number): void {
+    const expanded = this.expandedRooms();
+    const newExpanded = new Set(expanded);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    this.expandedRooms.set(newExpanded);
+  }
+
+  isRoomExpanded(index: number): boolean {
+    return this.expandedRooms().has(index);
+  }
+
+  toggleContainer(id: string): void {
+    const expanded = this.expandedContainers();
+    const newExpanded = new Map(expanded);
+    newExpanded.set(id, !newExpanded.get(id));
+    this.expandedContainers.set(newExpanded);
+  }
+
+  isContainerExpanded(id: string): boolean {
+    return this.expandedContainers().get(id) ?? false;
+  }
+
+  private filterRoom(room: RoomData, roomIndex: number, searchLower: string): RoomData {
+    return {
+      ...room,
+      creatures: room.creatures.filter(c => this.filterCreature(c, searchLower)),
+      items: room.items.filter(i => this.filterItem(i, searchLower)),
+      containers: room.containers.map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower))
+    };
+  }
+
+  private filterCreature(creature: CreatureData, searchLower: string): boolean {
+    // Check type filter
+    if (creature.type === 'monster' && !this.filterMonster()) return false;
+    if (creature.type === 'npc' && !this.filterNPC()) return false;
+    if (creature.type === 'pc' && !this.filterPC()) return false;
+
+    // Check search text
+    if (searchLower && !creature.name.toLowerCase().includes(searchLower)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private filterItem(item: ItemData, searchLower: string): boolean {
+    // Check type filter
+    if (item.type === 'item' && !this.filterRegularItem()) return false;
+    if (item.type === 'magic-item' && !this.filterMagicItem()) return false;
+
+    // Check search text
+    if (searchLower && !item.name.toLowerCase().includes(searchLower)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private filterContainer(container: ContainerData, id: string, searchLower: string): ContainerData {
+    return {
+      ...container,
+      creatures: container.creatures.filter(c => this.filterCreature(c, searchLower)),
+      items: container.items.filter(i => this.filterItem(i, searchLower)),
+      containers: container.containers.map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower))
+    };
+  }
+
+  // Helper methods for template
+  getCreatureIcon(creature: CreatureData): string {
+    switch (creature.type) {
+      case 'monster': return '⚔️';
+      case 'npc': return '👤';
+      case 'pc': return '⭐';
+      default: return '❓';
+    }
+  }
+
+  getItemIcon(item: ItemData): string {
+    return item.type === 'magic-item' ? '✨' : '📦';
+  }
+
+  getContainerIcon(): string {
+    return '🎁';
+  }
+}

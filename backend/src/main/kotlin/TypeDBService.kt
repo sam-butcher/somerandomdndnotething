@@ -1,37 +1,29 @@
 package com.sambutcher
 
 import com.typedb.driver.TypeDB
+import com.typedb.driver.api.Credentials
 import com.typedb.driver.api.Driver
+import com.typedb.driver.api.DriverOptions
 import com.typedb.driver.api.Transaction
 import kotlinx.serialization.json.*
 import org.slf4j.LoggerFactory
 
 class TypeDBService(
-    private val address: String = "localhost:1729",
-    private val database: String = "dnd"
+    address: String,
+    private val database: String,
+    username: String,
+    password: String,
+    tlsEnabled: Boolean
 ) {
     private val logger = LoggerFactory.getLogger(TypeDBService::class.java)
-    private var driver: Driver? = null
-
-    fun connect() {
-        try {
-            // For TypeDB 3.x Core, use driver() with null credentials and options
-            driver = TypeDB.driver(address, null, null)
-            logger.info("Connected to TypeDB at $address")
-        } catch (e: Exception) {
-            logger.error("Failed to connect to TypeDB", e)
-            throw e
-        }
-    }
+    private val driver: Driver = TypeDB.driver(address, Credentials(username, password), DriverOptions(tlsEnabled, null))
 
     fun close() {
-        driver?.close()
+        driver.close()
         logger.info("TypeDB connection closed")
     }
 
     fun getDungeonGraph(dungeonName: String): DungeonGraph? {
-        val driver = this.driver ?: throw IllegalStateException("TypeDB driver not connected")
-
         return try {
             driver.transaction(database, Transaction.Type.READ).use { tx ->
                 queryDungeonGraph(tx, dungeonName)
@@ -61,13 +53,12 @@ class TypeDBService(
                                 $c isa! $c-type;
                                 $c-type sub creature;
                             fetch {
-                                "type": $c-type.label,
+                                "type": $c-type,
                                 "name": $c.name,
                                 "description": $c.description,
                                 "level": $c.level,
                                 "hitPoints": $c.hit-points,
                                 "armorClass": $c.armor-class,
-                                "isFriendly": $c.is-friendly
                             };
                         ],
                         "items": [
@@ -75,10 +66,9 @@ class TypeDBService(
                                 $i isa! $i-type;
                                 $i-type sub item;
                             fetch {
-                                "type": $i-type.label,
+                                "type": $i-type,
                                 "name": $i.name,
                                 "description": $i.description,
-                                "isMagical": $i.is-magical
                             };
                         ],
                         "containers": [
@@ -86,7 +76,7 @@ class TypeDBService(
                                 $bc isa! $bc-type;
                                 $bc-type sub box-container;
                             fetch {
-                                "type": $bc-type.label,
+                                "type": $bc-type,
                                 "name": $bc.name,
                                 "description": $bc.description,
                                 "capacity": $bc.capacity,
@@ -95,10 +85,9 @@ class TypeDBService(
                                         $bi isa! $bi-type;
                                         $bi-type sub item;
                                     fetch {
-                                        "type": $bi-type.label,
+                                        "type": $bi-type,
                                         "name": $bi.name,
                                         "description": $bi.description,
-                                        "isMagical": $bi.is-magical
                                     };
                                 ],
                                 "creatures": [
@@ -106,13 +95,12 @@ class TypeDBService(
                                         $bcc isa! $bcc-type;
                                         $bcc-type sub creature;
                                     fetch {
-                                        "type": $bcc-type.label,
+                                        "type": $bcc-type,
                                         "name": $bcc.name,
                                         "description": $bcc.description,
                                         "level": $bcc.level,
                                         "hitPoints": $bcc.hit-points,
                                         "armorClass": $bcc.armor-class,
-                                        "isFriendly": $bcc.is-friendly
                                     };
                                 ]
                             };
@@ -162,7 +150,7 @@ class TypeDBService(
     }
 
     private fun parseCreature(json: JsonObject): CreatureData {
-        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "monster"
+        val type = json["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull ?: "monster"
         val name = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = json["description"]?.jsonPrimitive?.contentOrNull
         val level = json["level"]?.jsonPrimitive?.longOrNull
@@ -179,7 +167,7 @@ class TypeDBService(
     }
 
     private fun parseItem(json: JsonObject): ItemData {
-        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "item"
+        val type = json["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull ?: "item"
         val name = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = json["description"]?.jsonPrimitive?.contentOrNull
         val isMagical = json["isMagical"]?.jsonPrimitive?.booleanOrNull
@@ -192,7 +180,7 @@ class TypeDBService(
     }
 
     private fun parseContainer(json: JsonObject): ContainerData {
-        val type = json["type"]?.jsonPrimitive?.contentOrNull ?: "box-container"
+        val type = json["type"]?.jsonObject?.get("label")?.jsonPrimitive?.contentOrNull ?: "box-container"
         val name = json["name"]?.jsonPrimitive?.contentOrNull ?: ""
         val description = json["description"]?.jsonPrimitive?.contentOrNull
         val capacity = json["capacity"]?.jsonPrimitive?.longOrNull

@@ -4,10 +4,9 @@ ktor:
       - com.sambutcher.ApplicationKt.module
   deployment:
     port: 8080
-jwt:
-  domain: "https://jwt-provider-domain/"
-  audience: "jwt-audience"
-  realm: "ktor sample app"
 typedb:
-  address: "localhost:1729"
-  database: "dnd"
+  address: "https://n69m16-0.cluster.typedb.com:80"
+  database: "sam-hackathon"
+  username: "admin"
+  password: ${TYPEDB_PASSWORD:password}
+  tlsEnabled: True
