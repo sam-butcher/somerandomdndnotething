@@ -106,9 +106,9 @@ export class DungeonViewer {
   private filterRoom(room: RoomData, roomIndex: number, searchLower: string): RoomData {
     return {
       ...room,
-      creatures: room.creatures.filter(c => this.filterCreature(c, searchLower)),
-      items: room.items.filter(i => this.filterItem(i, searchLower)),
-      containers: room.containers.map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower))
+      creatures: (room.creatures || []).filter(c => this.filterCreature(c, searchLower)),
+      items: (room.items || []).filter(i => this.filterItem(i, searchLower)),
+      containers: (room.containers || []).map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower))
     };
   }
 
@@ -142,9 +142,9 @@ export class DungeonViewer {
   private filterContainer(container: ContainerData, id: string, searchLower: string): ContainerData {
     return {
       ...container,
-      creatures: container.creatures.filter(c => this.filterCreature(c, searchLower)),
-      items: container.items.filter(i => this.filterItem(i, searchLower)),
-      containers: container.containers.map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower))
+      creatures: (container.creatures || []).filter(c => this.filterCreature(c, searchLower)),
+      items: (container.items || []).filter(i => this.filterItem(i, searchLower)),
+      containers: (container.containers || []).map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower))
     };
   }
 

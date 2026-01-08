@@ -79,7 +79,6 @@ sealed class ItemData {
     data class MagicItem(
         override val name: String,
         override val description: String? = null,
-        val isMagical: Boolean? = true
     ) : ItemData()
 }
 

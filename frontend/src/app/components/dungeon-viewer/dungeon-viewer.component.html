@@ -103,7 +103,7 @@
                 }
 
                 <!-- Creatures -->
-                @if (room.creatures.length > 0) {
+                @if (room.creatures && room.creatures.length > 0) {
                   <div class="content-section">
                     <h4 class="section-title">Creatures</h4>
                     <div class="creatures-list">
@@ -139,7 +139,7 @@
                 }
 
                 <!-- Items -->
-                @if (room.items.length > 0) {
+                @if (room.items && room.items.length > 0) {
                   <div class="content-section">
                     <h4 class="section-title">Items</h4>
                     <div class="items-list">
@@ -159,7 +159,7 @@
                 }
 
                 <!-- Containers -->
-                @if (room.containers.length > 0) {
+                @if (room.containers && room.containers.length > 0) {
                   <div class="content-section">
                     <h4 class="section-title">Containers</h4>
                     @for (container of room.containers; track $index) {
@@ -181,23 +181,49 @@
                               <p class="container-description">{{ container.description }}</p>
                             }
 
-                            @if (container.creatures.length > 0) {
+                            @if (container.creatures && container.creatures.length > 0) {
                               <div class="nested-creatures">
                                 @for (creature of container.creatures; track creature.name) {
                                   <div class="creature-item" [class]="'creature-' + creature.type">
                                     <span class="icon">{{ getCreatureIcon(creature) }}</span>
-                                    <strong>{{ creature.name }}</strong>
+                                    <div class="creature-details">
+                                      <strong class="creature-name">{{ creature.name }}</strong>
+                                      @if (creature.description) {
+                                        <p class="creature-description">{{ creature.description }}</p>
+                                      }
+                                      <div class="creature-stats">
+                                        @if (creature.level) {
+                                          <span class="stat">Level: {{ creature.level }}</span>
+                                        }
+                                        @if (creature.hitPoints) {
+                                          <span class="stat">HP: {{ creature.hitPoints }}</span>
+                                        }
+                                        @if (creature.armorClass) {
+                                          <span class="stat">AC: {{ creature.armorClass }}</span>
+                                        }
+                                        @if (creature.type === 'npc' && creature.isFriendly !== null) {
+                                          <span class="stat" [class.friendly]="creature.isFriendly">
+                                            {{ creature.isFriendly ? '😊 Friendly' : '😠 Hostile' }}
+                                          </span>
+                                        }
+                                      </div>
+                                    </div>
                                   </div>
                                 }
                               </div>
                             }
 
-                            @if (container.items.length > 0) {
+                            @if (container.items && container.items.length > 0) {
                               <div class="nested-items">
                                 @for (item of container.items; track item.name) {
                                   <div class="item-item" [class]="'item-' + item.type">
                                     <span class="icon">{{ getItemIcon(item) }}</span>
-                                    <strong>{{ item.name }}</strong>
+                                    <div class="item-details">
+                                      <strong class="item-name">{{ item.name }}</strong>
+                                      @if (item.description) {
+                                        <p class="item-description">{{ item.description }}</p>
+                                      }
+                                    </div>
                                   </div>
                                 }
                               </div>

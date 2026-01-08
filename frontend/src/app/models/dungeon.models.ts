@@ -10,9 +10,9 @@ export interface RoomData {
   name: string;
   description?: string;
   capacity?: number;
-  creatures: CreatureData[];
-  items: ItemData[];
-  containers: ContainerData[];
+  creatures?: CreatureData[];
+  items?: ItemData[];
+  containers?: ContainerData[];
 }
 
 // Discriminated union types matching backend sealed classes
@@ -69,7 +69,7 @@ export interface BoxContainer {
   name: string;
   description?: string;
   capacity?: number;
-  items: ItemData[];
-  creatures: CreatureData[];
-  containers: ContainerData[];
+  items?: ItemData[];
+  creatures?: CreatureData[];
+  containers?: ContainerData[];
 }
