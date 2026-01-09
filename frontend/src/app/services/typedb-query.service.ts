@@ -122,6 +122,25 @@ export class TypeDBQueryService {
                 "ability": { $ability.* },
                 "type": $ability_type
               };
+            ],
+            "templateCreature": [
+              match
+                $contained isa creature-group;
+                group-template (group: $contained, template-creature: $creature);
+                $creature isa! $creature_type;
+              fetch {
+                "type": $creature_type,
+                "attributes": { $creature.* },
+                "abilities": [
+                  match
+                    (creature: $creature, ability: $ability) isa has-ability;
+                    $ability isa $ability_type;
+                  fetch {
+                    "ability": { $ability.* },
+                    "type": $ability_type
+                  };
+                ]
+              };
             ]
           };
         ],
@@ -222,6 +241,24 @@ export class TypeDBQueryService {
             'ability-type': a.type.label,
           })),
         };
+
+        // For creature-groups, parse the template creature
+        if (entityType === 'creature-group' && c.templateCreature && c.templateCreature.length > 0) {
+          const templateData = c.templateCreature[0];
+          const creatureType = templateData.type.label as string;
+          const abilities = templateData.abilities || [];
+
+          const templateEntityData: EntityAttributes = {
+            ...templateData.attributes,
+            entityType: creatureType,
+            abilities: abilities.map((a: any) => ({
+              ...a.ability,
+              'ability-type': a.type.label,
+            })),
+          };
+
+          entityData['template-creature'] = this.parseCreatureFromEntity(templateEntityData, creatureType);
+        }
 
         // Add containment edge with inline entity data
         containmentEdges.push({
