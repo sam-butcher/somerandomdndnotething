@@ -345,7 +345,6 @@
                             (click)="navigateToRoom(connection.targetRoomIndex)"
                             [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
                           >
-                            <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
                             <div class="connection-details">
                               <div class="connection-header">
                                 <strong class="connection-target">{{ connection.targetRoomName }}</strong>
@@ -385,7 +384,6 @@
                             (click)="navigateToRoom(connection.targetRoomIndex)"
                             [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
                           >
-                            <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
                             <div class="connection-details">
                               <div class="connection-header">
                                 <span class="connection-direction">← From</span>

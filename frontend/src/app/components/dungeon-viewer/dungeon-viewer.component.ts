@@ -213,17 +213,6 @@ export class DungeonViewer implements OnInit {
     }
   }
 
-  getConnectionIcon(connection: RoomConnection): string {
-    if (connection['is-locked']) return '🔒';
-    if (connection['is-secret']) return '🗝️';
-    switch (connection['connection-type']) {
-      case ConnectionType.DOOR: return '🚪';
-      case ConnectionType.CORRIDOR: return '↔️';
-      case ConnectionType.PASSAGE: return '🚶';
-      default: return '→';
-    }
-  }
-
   getConnectionClass(connection: RoomConnection): string {
     const classes = [`connection-${connection['connection-type'].toLowerCase()}`];
     if (connection['is-secret']) classes.push('connection-secret');
