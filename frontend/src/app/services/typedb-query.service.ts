@@ -57,26 +57,24 @@ export class TypeDBQueryService {
   }
 
   async getDungeonGraph(dungeonId: string): Promise<DungeonGraph | null> {
-    // Single query: Get dungeon structure with all entity details using fetch subqueries
+    // Single query: Get complete dungeon data (structure, entity details, and random encounters)
     const structure = await this.fetchDungeonStructure(dungeonId);
     if (!structure) return null;
 
-    // Single query: Get random encounter tables with full creature details
-    const randomEncounters = await this.fetchRandomEncounters(dungeonId);
-
-    // Build the dungeon graph from structure and details
-    return this.buildDungeonFromStructure(structure, randomEncounters);
+    // Build the dungeon graph from all fetched data
+    return this.buildDungeonFromStructure(structure);
   }
 
   /**
-   * Fetch dungeon structure with all entity details using fetch subqueries
-   * Returns: dungeon metadata, rooms, containment relationships, and full entity details
+   * Fetch complete dungeon data including structure, entity details, and random encounters
+   * Returns: dungeon metadata, rooms, containment relationships, entity details, and random encounter tables
    */
   private async fetchDungeonStructure(dungeonId: string): Promise<{
     dungeon: { id: string; name: string; description?: string };
     rooms: Array<{ id: string; name: string; description?: string }>;
     containmentEdges: ContainmentEdge[];
     entityDetails: Map<string, EntityAttributes>;
+    randomEncounters: RandomEncounterTable[];
   } | null> {
     const query = `
       match
@@ -105,6 +103,38 @@ export class TypeDBQueryService {
               fetch {
                 "ability": { $ability.* },
                 "type": $ability_type
+              };
+            ]
+          };
+        ],
+        "randomEncounters": [
+          match
+            dungeon-encounters (dungeon: $dungeon, encounter-table: $table);
+          fetch {
+            "table": { $table.* },
+            "entries": [
+              match
+                has-encounter-entry (table: $table, entry: $entry);
+              fetch {
+                "entry": { $entry.* },
+                "templateCreature": [
+                  match
+                    group-template (group: $entry, template-creature: $creature);
+                    $creature isa! $creature_type;
+                  fetch {
+                    "type": $creature_type,
+                    "attributes": { $creature.* },
+                    "abilities": [
+                      match
+                        (creature: $creature, ability: $ability) isa has-ability;
+                        $ability isa $ability_type;
+                      fetch {
+                        "ability": { $ability.* },
+                        "type": $ability_type
+                      };
+                    ]
+                  };
+                ]
               };
             ]
           };
@@ -146,21 +176,7 @@ export class TypeDBQueryService {
 
         // Build entity details with abilities
         const abilities = c.abilities || [];
-        const abilityMap = new Map<string, CreatureAbility[]>();
-
-        for (const abilityData of abilities) {
-          const abilityType = abilityData.type.label as string;
-          const ability: CreatureAbility = {
-            name: abilityData.ability.name as string,
-            description: abilityData.ability.description as string,
-            actionCost: abilityData.ability['action-cost'] as number | undefined,
-          };
-
-          if (!abilityMap.has(abilityType)) {
-            abilityMap.set(abilityType, []);
-          }
-          abilityMap.get(abilityType)!.push(ability);
-        }
+        const abilityMap = this.buildAbilityMap(abilities);
 
         entityDetails.set(containedId, {
           ...c.attributes,
@@ -169,22 +185,68 @@ export class TypeDBQueryService {
         });
       }
 
-      return { dungeon, rooms, containmentEdges, entityDetails };
+      // Parse random encounters
+      const randomEncounters: RandomEncounterTable[] = [];
+      for (const encounterTableResult of result.randomEncounters || []) {
+        const tableData = encounterTableResult.table;
+        const entries: EncounterEntryData[] = [];
+
+        for (const entryResult of encounterTableResult.entries || []) {
+          const entryData = entryResult.entry;
+          let templateCreature: CreatureData | undefined;
+
+          // Parse template creature from fetched details
+          if (entryResult.templateCreature && entryResult.templateCreature.length > 0) {
+            const templateData = entryResult.templateCreature[0];
+            const creatureType = templateData.type.label as string;
+            const abilities = templateData.abilities || [];
+
+            // Build ability map
+            const abilityMap = this.buildAbilityMap(abilities);
+
+            const entityData: EntityAttributes = {
+              ...templateData.attributes,
+              entityType: creatureType,
+              abilityMap,
+            };
+
+            templateCreature = this.parseCreatureFromEntity(entityData, creatureType) || undefined;
+          }
+
+          entries.push({
+            encounterNumber: entryData['encounter-number'] as number,
+            name: entryData['name'] as string,
+            description: entryData['description'] as string | undefined,
+            quantityMin: entryData['quantity-min'] as number | undefined,
+            quantityMax: entryData['quantity-max'] as number | undefined,
+            quantityDice: entryData['quantity-dice'] as string | undefined,
+            templateCreature,
+          });
+        }
+
+        randomEncounters.push({
+          id: tableData['id'] as string,
+          name: tableData['name'] as string,
+          description: tableData['description'] as string | undefined,
+          triggerCondition: tableData['trigger-condition'] as string | undefined,
+          encounters: entries,
+        });
+      }
+
+      return { dungeon, rooms, containmentEdges, entityDetails, randomEncounters };
     });
   }
 
   /**
    * Build the dungeon graph from structure data and entity details
    */
-  private buildDungeonFromStructure(
-    structure: {
-      dungeon: { id: string; name: string; description?: string };
-      rooms: Array<{ id: string; name: string; description?: string }>;
-      containmentEdges: ContainmentEdge[];
-      entityDetails: Map<string, EntityAttributes>;
-    },
-    randomEncounters: RandomEncounterTable[]
-  ): DungeonGraph {
+  private buildDungeonFromStructure(structure: {
+    dungeon: { id: string; name: string; description?: string };
+    rooms: Array<{ id: string; name: string; description?: string }>;
+    containmentEdges: ContainmentEdge[];
+    entityDetails: Map<string, EntityAttributes>;
+    randomEncounters: RandomEncounterTable[];
+  }): DungeonGraph {
     // Build containment map: container ID -> set of contained entity IDs
     const containmentMap = new Map<string, Set<string>>();
     for (const edge of structure.containmentEdges) {
@@ -204,7 +266,7 @@ export class TypeDBQueryService {
       name: structure.dungeon.name,
       description: structure.dungeon.description,
       rooms,
-      randomEncounters: randomEncounters.length > 0 ? randomEncounters : undefined,
+      randomEncounters: structure.randomEncounters.length > 0 ? structure.randomEncounters : undefined,
     };
   }
 
@@ -247,7 +309,7 @@ export class TypeDBQueryService {
         const trap = this.parseTrapFromEntity(entityData);
         if (trap) traps.push(trap);
       } else if (entityType === 'creature-group') {
-        const creatureGroup = this.parseCreatureGroupFromEntity(entityId, entityData, containmentMap, entityDetails);
+        const creatureGroup = this.parseCreatureGroupFromEntity(entityData);
         if (creatureGroup) creatureGroups.push(creatureGroup);
       }
     }
@@ -499,139 +561,34 @@ export class TypeDBQueryService {
     };
   }
 
-  private parseCreatureGroupFromEntity(
-    groupId: string,
-    entity: EntityAttributes,
-    containmentMap: Map<string, Set<string>>,
-    entityDetails: Map<string, EntityAttributes>
-  ): CreatureGroupData | null {
-    const name = entity['name'] as string;
-    if (!name) return null;
-
-    // Get the template creature via group-template relation
-    // The template creature should be linked to this group
-    let templateCreature: CreatureData | undefined;
-
-    // Look through the containmentMap or entity links to find the template
-    // In our schema, the group-template relation connects groups to creatures
-    // We need to fetch this separately or include it in the entity details
-    // For now, we'll leave it undefined and handle it in the query
-
+  private parseCreatureGroupFromEntity(entity: EntityAttributes): CreatureGroupData | null {
     return {
-      name,
+      name: entity['name'] as string,
       description: entity['description'] as string | undefined,
       quantityMin: entity['quantity-min'] as number | undefined,
       quantityMax: entity['quantity-max'] as number | undefined,
       quantityDice: entity['quantity-dice'] as string | undefined,
-      templateCreature,
     };
   }
 
-  /**
-   * Fetch random encounter tables for a dungeon with full creature details
-   */
-  private async fetchRandomEncounters(dungeonId: string): Promise<RandomEncounterTable[]> {
-    const query = `
-      match
-        $dungeon isa dungeon, has id "${dungeonId}";
-        dungeon-encounters (dungeon: $dungeon, encounter-table: $table);
-      fetch {
-        "table": { $table.* },
-        "entries": [
-          match
-            has-encounter-entry (table: $table, entry: $entry);
-          fetch {
-            "entry": { $entry.* },
-            "templateCreature": [
-              match
-                group-template (group: $entry, template-creature: $creature);
-                $creature isa! $creature_type;
-              fetch {
-                "type": $creature_type,
-                "attributes": { $creature.* },
-                "abilities": [
-                  match
-                    (creature: $creature, ability: $ability) isa has-ability;
-                    $ability isa $ability_type;
-                  fetch {
-                    "ability": { $ability.* },
-                    "type": $ability_type
-                  };
-                ]
-              };
-            ]
-          };
-        ]
+  private buildAbilityMap(abilities: any[]) {
+    const abilityMap = new Map<string, CreatureAbility[]>();
+
+    for (const abilityData of abilities) {
+      const abilityType = abilityData.type.label as string;
+      const ability: CreatureAbility = {
+        name: abilityData.ability.name as string,
+        description: abilityData.ability.description as string,
+        actionCost: abilityData.ability['action-cost'] as number | undefined,
       };
-    `;
 
-    return this.connectionService.executeReadQuery(query, (response) => {
-      if (response.answerType !== 'conceptDocuments' || response.answers.length === 0) {
-        return [];
+      if (!abilityMap.has(abilityType)) {
+        abilityMap.set(abilityType, []);
       }
+      abilityMap.get(abilityType)!.push(ability);
+    }
 
-      const tables: RandomEncounterTable[] = [];
-
-      for (const result of response.answers as any[]) {
-        const tableData = result.table;
-        const entries: EncounterEntryData[] = [];
-
-        for (const entryResult of result.entries || []) {
-          const entryData = entryResult.entry;
-          let templateCreature: CreatureData | undefined;
-
-          // Parse template creature from fetched details
-          if (entryResult.templateCreature && entryResult.templateCreature.length > 0) {
-            const templateData = entryResult.templateCreature[0];
-            const creatureType = templateData.type.label as string;
-            const abilities = templateData.abilities || [];
-
-            // Build ability map
-            const abilityMap = new Map<string, CreatureAbility[]>();
-            for (const abilityData of abilities) {
-              const abilityType = abilityData.type.label as string;
-              const ability: CreatureAbility = {
-                name: abilityData.ability.name as string,
-                description: abilityData.ability.description as string,
-                actionCost: abilityData.ability['action-cost'] as number | undefined,
-              };
-
-              if (!abilityMap.has(abilityType)) {
-                abilityMap.set(abilityType, []);
-              }
-              abilityMap.get(abilityType)!.push(ability);
-            }
-
-            const entityData: EntityAttributes = {
-              ...templateData.attributes,
-              entityType: creatureType,
-              abilityMap,
-            };
-
-            templateCreature = this.parseCreatureFromEntity(entityData, creatureType) || undefined;
-          }
-
-          entries.push({
-            encounterNumber: entryData['encounter-number'] as number,
-            name: entryData['name'] as string,
-            description: entryData['description'] as string | undefined,
-            quantityMin: entryData['quantity-min'] as number | undefined,
-            quantityMax: entryData['quantity-max'] as number | undefined,
-            quantityDice: entryData['quantity-dice'] as string | undefined,
-            templateCreature,
-          });
-        }
-
-        tables.push({
-          id: tableData['id'] as string,
-          name: tableData['name'] as string,
-          description: tableData['description'] as string | undefined,
-          triggerCondition: tableData['trigger-condition'] as string | undefined,
-          encounters: entries,
-        });
-      }
-
-      return tables;
-    });
+    return abilityMap;
   }
+
 }
