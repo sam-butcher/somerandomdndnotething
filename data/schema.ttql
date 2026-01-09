@@ -97,6 +97,22 @@ attribute skill-survival, value integer;
 # Action cost for legendary actions
 attribute action-cost, value integer;
 
+# Random encounters and variable spawns
+attribute quantity-min, value integer;
+attribute quantity-max, value integer;
+attribute quantity-dice, value string;
+attribute encounter-number, value integer;
+attribute trigger-condition, value string;
+
+# Traps
+attribute save-dc, value integer;
+attribute save-ability, value string @values("STR", "DEX", "CON", "INT", "WIS", "CHA");
+attribute damage-dice, value string;
+attribute damage-type, value string;
+attribute trap-type, value string @values("Mechanical", "Magical", "Hybrid");
+attribute trigger-description, value string;
+attribute disarm-dc, value integer;
+
 # ============================================================================
 # Entity Types - Creatures
 # ============================================================================
@@ -108,7 +124,8 @@ entity creature @abstract, sub containable,
     owns hit-points,
     owns armor-class,
     owns alignment,
-    plays has-ability:creature;
+    plays has-ability:creature,
+    plays group-template:template-creature;
 
 entity statblock-creature @abstract, sub creature,
     owns strength,
@@ -192,6 +209,7 @@ entity dungeon,
     owns id @key,
     owns name,
     owns description,
+    plays dungeon-encounters:dungeon,
     plays dungeon-composition:dungeon;
 
 entity item, sub containable,
@@ -201,6 +219,56 @@ entity item, sub containable,
 entity magic-item, sub item,
     owns requires-attunement,
     owns rarity;
+
+# ============================================================================
+# Entity Types - Traps
+# ============================================================================
+
+entity trap, sub containable,
+    owns name,
+    owns description,
+    owns trap-type,
+    owns save-dc,
+    owns save-ability,
+    owns damage-dice,
+    owns damage-type @card(0..),
+    owns trigger-description,
+    owns disarm-dc;
+
+# ============================================================================
+# Entity Types - Variable Enemy Groups
+# ============================================================================
+
+entity creature-group, sub containable,
+    owns name,
+    owns description,
+    owns quantity-min,
+    owns quantity-max,
+    owns quantity-dice,
+    plays group-template:group;
+
+# ============================================================================
+# Entity Types - Random Encounters
+# ============================================================================
+
+entity random-encounter-table,
+    owns id @key,
+    owns name,
+    owns description,
+    owns trigger-condition,
+    plays dungeon-encounters:encounter-table,
+    plays has-encounter-entry:table;
+
+entity encounter-entry,
+    owns id @key,
+    owns name,
+    owns description,
+    owns encounter-number,
+    owns quantity-min,
+    owns quantity-max,
+    owns quantity-dice,
+    plays has-encounter-entry:entry,
+    plays group-template:group;
 
 # ============================================================================
 # Entity Types - Creature Abilities
@@ -235,6 +303,18 @@ relation dungeon-composition,
 relation has-ability,
     relates creature,
     relates ability;
+
+relation dungeon-encounters,
+    relates dungeon,
+    relates encounter-table;
+
+relation has-encounter-entry,
+    relates table,
+    relates entry;
+
+relation group-template,
+    relates group,
+    relates template-creature;
 
 # ============
 # Functions
