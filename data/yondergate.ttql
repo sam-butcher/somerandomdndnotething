@@ -1,0 +1,820 @@
+# Adapted from the one-page dungeon "The Yondergate" by Steve Kilian, licensed under CC BY-SA 3.0
+
+insert
+
+$d isa dungeon, has id 'yondergate', has name 'The Yondergate', has description 'An alien portal that appears in varied environments without reason or warning. A labyrinthine dungeon with impenetrable darkness, where the meat hates the metal and the metal hates the meat.';
+
+# Rooms
+
+$arrival1 isa room, has name "Arrival Point 1", has id "yondergate-arrival1", has description "One of four numbered arrival points. Behind you is a carving of the place you just left, detailed down to the litter on the ground and the crows on the wing: a snapshot in stone.";
+dungeon-composition ($d, $arrival1);
+
+$arrival2 isa room, has name "Arrival Point 2", has id "yondergate-arrival2", has description "One of four numbered arrival points. Behind you is a carving of the place you just left, detailed down to the litter on the ground and the crows on the wing: a snapshot in stone.";
+dungeon-composition ($d, $arrival2);
+
+$arrival3 isa room, has name "Arrival Point 3", has id "yondergate-arrival3", has description "One of four numbered arrival points. Behind you is a carving of the place you just left, detailed down to the litter on the ground and the crows on the wing: a snapshot in stone.";
+dungeon-composition ($d, $arrival3);
+
+$arrival4 isa room, has name "Arrival Point 4", has id "yondergate-arrival4", has description "One of four numbered arrival points. Behind you is a carving of the place you just left, detailed down to the litter on the ground and the crows on the wing: a snapshot in stone.";
+dungeon-composition ($d, $arrival4);
+
+$roomB isa room, has name "Stone Mouth Chamber", has id "yondergate-b", has description "A room containing a stone mouth embedded in the wall.";
+dungeon-composition ($d, $roomB);
+
+$roomC isa room, has name "Clockwork Minotaur's Mirror", has id "yondergate-c", has description "A chamber with a clockwork minotaur standing before a mirror. The reflection shows a golem minotaur instead of the clockwork one.";
+dungeon-composition ($d, $roomC);
+
+$roomD isa room, has name "Gate-rat Nest", has id "yondergate-d", has description "A passage where gate-rats lurk in the ceiling, ready to drop on unsuspecting victims.";
+dungeon-composition ($d, $roomD);
+
+$roomE isa room, has name "Web-filled Passage", has id "yondergate-e", has description "A passage and concealed pit filled with thick webs. Anyone falling into the pit is teleported to the spider pit.";
+dungeon-composition ($d, $roomE);
+
+$roomF isa room, has name "Skeleton Workshop", has id "yondergate-f", has description "A macabre workshop where the Skeleton King assembles improved skeletons from stacks of bones and metal scraps.";
+dungeon-composition ($d, $roomF);
+
+$roomG isa room, has name "Control Room", has id "yondergate-g", has description "On the floor is a model of the Yondergate Labyrinth, complete with figurines of the creatures within - including the party. Moving figurines relocates creatures to corresponding places in the labyrinth.";
+dungeon-composition ($d, $roomG);
+
+$roomH isa room, has name "Wizard's Tomb", has id "yondergate-h", has description "A grim chamber containing the remains of a dead wizard, fused with the floor and wall.";
+dungeon-composition ($d, $roomH);
+
+$roomI1 isa room, has name "Echoing Corridor", has id "yondergate-i1", has description "A corridor where sounds from deeper in the dungeon can be heard echoing.";
+dungeon-composition ($d, $roomI1);
+
+$roomI2 isa room, has name "Random Encounter Chamber", has id "yondergate-i2", has description "A chamber where random encounters are guaranteed to occur.";
+dungeon-composition ($d, $roomI2);
+
+$roomJ isa room, has name "Mimic's Lair", has id "yondergate-j", has description "A room containing an ornate chest sitting on a wooden table. The chest contains sleep gas and treasure, but the table is actually a mimic.";
+dungeon-composition ($d, $roomJ);
+
+$roomK isa room, has name "Gate-compass Chamber", has id "yondergate-k", has description "A chamber with bas-reliefs on the walls matching those from the Arrival Points. A compass points toward one arrival point that is not of the party's origin.";
+dungeon-composition ($d, $roomK);
+
+$roomL isa room, has name "Sound Passage", has id "yondergate-l", has description "A passage where the sound of creatures can be heard receding into the distance.";
+dungeon-composition ($d, $roomL);
+
+$roomM isa room, has name "Spider Pit", has id "yondergate-m", has description "A 20 foot deep pit filled with spiders. The pit is littered with bones and modest treasure.";
+dungeon-composition ($d, $roomM);
+
+$roomN isa room, has name "Golem Minotaur's Mirror", has id "yondergate-n", has description "A chamber with a golem minotaur wielding a warhammer before a mirror. The reflection shows a clockwork minotaur. The mirror is see-through when approached from the spider pit.";
+dungeon-composition ($d, $roomN);
+
+# Creatures - Clockwork Minotaur (Area C)
+
+$clockwork isa monster,
+  has name "Clockwork Minotaur",
+  has id "yondergate-clockwork-minotaur",
+  has description "A mechanical construct resembling a minotaur, made of gears and metal. It regenerates damage and requires magical weapons to hit. Will pursue anyone who comes within 10 feet and battle the golem minotaur to the death.",
+  has challenge-rating "6",
+  has hit-points 85,
+  has armor-class 16,
+  has alignment "Unaligned",
+  has strength 18,
+  has dexterity 11,
+  has constitution 18,
+  has intelligence 3,
+  has wisdom 8,
+  has charisma 5,
+  has proficiency-bonus 3,
+  has passive-perception 9,
+  has speed-walk 40,
+  has size "Large",
+  has creature-type "Construct",
+  has damage-immunity "poison",
+  has damage-immunity "psychic",
+  has condition-immunity "charmed",
+  has condition-immunity "exhaustion",
+  has condition-immunity "frightened",
+  has condition-immunity "paralyzed",
+  has condition-immunity "petrified",
+  has condition-immunity "poisoned";
+
+$clock_regen isa trait, has name "Regeneration", has description "The clockwork minotaur regains 10 hit points at the start of its turn. If it takes fire or acid damage, this trait doesn't function at the start of its next turn. The minotaur dies only if it starts its turn with 0 hit points and doesn't regenerate.";
+has-ability ($clockwork, $clock_regen);
+
+$clock_magic isa trait, has name "Magic Resistance", has description "Magical weapons are required to damage this creature.";
+has-ability ($clockwork, $clock_magic);
+
+$clock_gore isa action, has name "Gore", has description "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 18 (2d12 + 4) piercing damage.";
+has-ability ($clockwork, $clock_gore);
+
+$clock_slam isa action, has name "Slam", has description "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) bludgeoning damage.";
+has-ability ($clockwork, $clock_slam);
+
+containment (container: $roomC, contained: $clockwork);
+
+# Creatures - Golem Minotaur (Area N)
+
+$golem isa monster,
+  has name "Golem Minotaur",
+  has id "yondergate-golem-minotaur",
+  has description "A flesh golem shaped like a minotaur, wielding a massive warhammer. It regenerates damage and requires magical weapons to hit. Will fight the clockwork minotaur to the death.",
+  has challenge-rating "7",
+  has hit-points 93,
+  has armor-class 14,
+  has alignment "Unaligned",
+  has strength 19,
+  has dexterity 9,
+  has constitution 18,
+  has intelligence 6,
+  has wisdom 10,
+  has charisma 5,
+  has proficiency-bonus 3,
+  has passive-perception 10,
+  has speed-walk 30,
+  has size "Large",
+  has creature-type "Construct",
+  has damage-immunity "lightning",
+  has damage-immunity "poison",
+  has damage-resistance "bludgeoning, piercing, and slashing from nonmagical attacks",
+  has condition-immunity "charmed",
+  has condition-immunity "exhaustion",
+  has condition-immunity "frightened",
+  has condition-immunity "paralyzed",
+  has condition-immunity "petrified",
+  has condition-immunity "poisoned";
+
+$golem_regen isa trait, has name "Regeneration", has description "The golem minotaur regains 10 hit points at the start of its turn. If it takes fire damage, this trait doesn't function at the start of its next turn. The golem dies only if it starts its turn with 0 hit points and doesn't regenerate.";
+has-ability ($golem, $golem_regen);
+
+$golem_magic isa trait, has name "Magic Resistance", has description "Magical weapons are required to damage this creature.";
+has-ability ($golem, $golem_magic);
+
+$golem_berserk isa trait, has name "Berserk", has description "Whenever the golem starts its turn with 40 hit points or fewer, roll a d6. On a 6, the golem goes berserk and attacks the nearest creature it can see.";
+has-ability ($golem, $golem_berserk);
+
+$golem_hammer isa action, has name "Warhammer", has description "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 22 (3d10 + 4) bludgeoning damage.";
+has-ability ($golem, $golem_hammer);
+
+$golem_gore isa action, has name "Gore", has description "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d10 + 4) piercing damage.";
+has-ability ($golem, $golem_gore);
+
+containment (container: $roomN, contained: $golem);
+
+# Creatures - Skeleton King (Area F)
+
+$skeletonking isa monster,
+  has name "Skeleton King",
+  has id "yondergate-skeleton-king",
+  has description "A powerful undead lord who commands lesser skeletons, assembling improved skeletons from bones and metal. Wields a magical sword.",
+  has challenge-rating "5",
+  has hit-points 78,
+  has armor-class 17,
+  has alignment "Lawful Evil",
+  has strength 16,
+  has dexterity 14,
+  has constitution 16,
+  has intelligence 12,
+  has wisdom 11,
+  has charisma 16,
+  has proficiency-bonus 3,
+  has passive-perception 10,
+  has speed-walk 30,
+  has size "Medium",
+  has creature-type "Undead",
+  has damage-vulnerability "bludgeoning",
+  has damage-immunity "poison",
+  has condition-immunity "exhaustion",
+  has condition-immunity "poisoned",
+  has save-constitution 6,
+  has save-wisdom 3;
+
+$king_master isa trait, has name "Master of Bones", has description "The Skeleton King can command all skeletal creatures within 60 feet of it as a bonus action.";
+has-ability ($skeletonking, $king_master);
+
+$king_multi isa action, has name "Multiattack", has description "The Skeleton King makes two attacks with its magical longsword.";
+has-ability ($skeletonking, $king_multi);
+
+$king_sword isa action, has name "Magical Longsword", has description "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) slashing damage plus 7 (2d6) necrotic damage.";
+has-ability ($skeletonking, $king_sword);
+
+containment (container: $roomF, contained: $skeletonking);
+
+# Creatures - Improved Skeleton (Area F)
+
+$improved_skel1 isa monster,
+  has name "Improved Skeleton",
+  has id "yondergate-improved-skeleton-1",
+  has description "Bones lashed and riveted together with metal, making them more durable than normal skeletons. Made from bull bodies with human skulls.",
+  has challenge-rating "1",
+  has hit-points 22,
+  has armor-class 15,
+  has alignment "Lawful Evil",
+  has strength 12,
+  has dexterity 14,
+  has constitution 15,
+  has intelligence 6,
+  has wisdom 8,
+  has charisma 5,
+  has proficiency-bonus 2,
+  has passive-perception 9,
+  has speed-walk 30,
+  has size "Medium",
+  has creature-type "Undead",
+  has damage-vulnerability "bludgeoning",
+  has damage-immunity "poison",
+  has condition-immunity "exhaustion",
+  has condition-immunity "poisoned";
+
+$impskel_metal isa trait, has name "Metal Reinforcement", has description "The skeleton's AC is increased by 2 due to metal reinforcements.";
+has-ability ($improved_skel1, $impskel_metal);
+
+$impskel_claw isa action, has name "Claws", has description "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) slashing damage.";
+has-ability ($improved_skel1, $impskel_claw);
+
+containment (container: $roomF, contained: $improved_skel1);
+
+# Creatures - Skeleton Mastiff (Area F)
+
+$skel_mastiff isa monster,
+  has name "Skeleton Mastiff",
+  has id "yondergate-skeleton-mastiff-1",
+  has description "An undead hound made from bones, serving the Skeleton King loyally.",
+  has challenge-rating "1/2",
+  has hit-points 16,
+  has armor-class 13,
+  has alignment "Lawful Evil",
+  has strength 14,
+  has dexterity 14,
+  has constitution 12,
+  has intelligence 3,
+  has wisdom 12,
+  has charisma 6,
+  has proficiency-bonus 2,
+  has passive-perception 13,
+  has speed-walk 40,
+  has size "Medium",
+  has creature-type "Undead",
+  has damage-vulnerability "bludgeoning",
+  has damage-immunity "poison",
+  has condition-immunity "exhaustion",
+  has condition-immunity "poisoned",
+  has skill-perception 3;
+
+$mastiff_bite isa action, has name "Bite", has description "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 9 (2d6 + 2) piercing damage. If the target is a creature, it must succeed on a DC 11 Strength saving throw or be knocked prone.";
+has-ability ($skel_mastiff, $mastiff_bite);
+
+containment (container: $roomF, contained: $skel_mastiff);
+
+# Creatures - Gate-rats (Area D)
+
+$gaterat1 isa monster,
+  has name "Gate-rat",
+  has id "yondergate-gaterat-1",
+  has description "Vicious wall-climbing rodents similar to blink dogs. They enjoy dropping from above, biting, and blinking back to safety. Their bite causes disease.",
+  has challenge-rating "1/2",
+  has hit-points 13,
+  has armor-class 13,
+  has alignment "Unaligned",
+  has strength 8,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 4,
+  has wisdom 12,
+  has charisma 6,
+  has proficiency-bonus 2,
+  has passive-perception 11,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Small",
+  has creature-type "Monstrosity",
+  has skill-stealth 5,
+  has skill-perception 3;
+
+$gaterat_blink isa trait, has name "Teleport", has description "The gate-rat can magically teleport up to 40 feet to an unoccupied space it can see.";
+has-ability ($gaterat1, $gaterat_blink);
+
+$gaterat_climb isa trait, has name "Spider Climb", has description "The gate-rat can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.";
+has-ability ($gaterat1, $gaterat_climb);
+
+$gaterat_bite isa action, has name "Diseased Bite", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 3) piercing damage. The target must succeed on a DC 11 Constitution saving throw or contract a disease.";
+has-ability ($gaterat1, $gaterat_bite);
+
+containment (container: $roomD, contained: $gaterat1);
+
+$gaterat2 isa monster,
+  has name "Gate-rat",
+  has id "yondergate-gaterat-2",
+  has description "Vicious wall-climbing rodents similar to blink dogs. They enjoy dropping from above, biting, and blinking back to safety. Their bite causes disease.",
+  has challenge-rating "1/2",
+  has hit-points 13,
+  has armor-class 13,
+  has alignment "Unaligned",
+  has strength 8,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 4,
+  has wisdom 12,
+  has charisma 6,
+  has proficiency-bonus 2,
+  has passive-perception 11,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Small",
+  has creature-type "Monstrosity",
+  has skill-stealth 5,
+  has skill-perception 3;
+
+has-ability ($gaterat2, $gaterat_blink);
+has-ability ($gaterat2, $gaterat_climb);
+has-ability ($gaterat2, $gaterat_bite);
+
+containment (container: $roomD, contained: $gaterat2);
+
+$gaterat3 isa monster,
+  has name "Gate-rat",
+  has id "yondergate-gaterat-3",
+  has description "Vicious wall-climbing rodents similar to blink dogs. They enjoy dropping from above, biting, and blinking back to safety. Their bite causes disease.",
+  has challenge-rating "1/2",
+  has hit-points 13,
+  has armor-class 13,
+  has alignment "Unaligned",
+  has strength 8,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 4,
+  has wisdom 12,
+  has charisma 6,
+  has proficiency-bonus 2,
+  has passive-perception 11,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Small",
+  has creature-type "Monstrosity",
+  has skill-stealth 5,
+  has skill-perception 3;
+
+has-ability ($gaterat3, $gaterat_blink);
+has-ability ($gaterat3, $gaterat_climb);
+has-ability ($gaterat3, $gaterat_bite);
+
+containment (container: $roomD, contained: $gaterat3);
+
+# Creatures - Spiders (Area M)
+
+$spider1 isa monster,
+  has name "Giant Spider",
+  has id "yondergate-spider-1",
+  has description "A large spider lurking in the pit, guarding bones and treasure.",
+  has challenge-rating "1",
+  has hit-points 26,
+  has armor-class 14,
+  has alignment "Unaligned",
+  has strength 14,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 2,
+  has wisdom 11,
+  has charisma 4,
+  has proficiency-bonus 2,
+  has passive-perception 10,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Large",
+  has creature-type "Beast",
+  has sense "blindsight 10 ft.",
+  has sense "darkvision 60 ft.",
+  has skill-stealth 7;
+
+$spider_climb isa trait, has name "Spider Climb", has description "The spider can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.";
+has-ability ($spider1, $spider_climb);
+
+$spider_web_sense isa trait, has name "Web Sense", has description "While in contact with a web, the spider knows the exact location of any other creature in contact with the same web.";
+has-ability ($spider1, $spider_web_sense);
+
+$spider_web_walk isa trait, has name "Web Walker", has description "The spider ignores movement restrictions caused by webbing.";
+has-ability ($spider1, $spider_web_walk);
+
+$spider_bite isa action, has name "Bite", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage, and the target must make a DC 11 Constitution saving throw, taking 9 (2d8) poison damage on a failed save, or half as much damage on a successful one. If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way.";
+has-ability ($spider1, $spider_bite);
+
+$spider_web isa action, has name "Web (Recharge 5-6)", has description "Ranged Weapon Attack: +5 to hit, range 30/60 ft., one creature. Hit: The target is restrained by webbing. As an action, the restrained target can make a DC 12 Strength check, bursting the webbing on a success. The webbing can also be attacked and destroyed (AC 10; hp 5; vulnerability to fire damage; immunity to bludgeoning, poison, and psychic damage).";
+has-ability ($spider1, $spider_web);
+
+containment (container: $roomM, contained: $spider1);
+
+$spider2 isa monster,
+  has name "Giant Spider",
+  has id "yondergate-spider-2",
+  has description "A large spider lurking in the pit, guarding bones and treasure.",
+  has challenge-rating "1",
+  has hit-points 26,
+  has armor-class 14,
+  has alignment "Unaligned",
+  has strength 14,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 2,
+  has wisdom 11,
+  has charisma 4,
+  has proficiency-bonus 2,
+  has passive-perception 10,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Large",
+  has creature-type "Beast",
+  has sense "blindsight 10 ft.",
+  has sense "darkvision 60 ft.",
+  has skill-stealth 7;
+
+has-ability ($spider2, $spider_climb);
+has-ability ($spider2, $spider_web_sense);
+has-ability ($spider2, $spider_web_walk);
+has-ability ($spider2, $spider_bite);
+has-ability ($spider2, $spider_web);
+
+containment (container: $roomM, contained: $spider2);
+
+# Creature - Mimic (Area J)
+
+$mimic isa monster,
+  has name "Mimic",
+  has id "yondergate-mimic",
+  has description "A shapeshifter disguised as a wooden table. It will attack if the chest on top of it is opened or removed.",
+  has challenge-rating "2",
+  has hit-points 58,
+  has armor-class 12,
+  has alignment "True Neutral",
+  has strength 17,
+  has dexterity 12,
+  has constitution 15,
+  has intelligence 5,
+  has wisdom 13,
+  has charisma 8,
+  has proficiency-bonus 2,
+  has passive-perception 11,
+  has speed-walk 15,
+  has size "Medium",
+  has creature-type "Monstrosity",
+  has damage-immunity "acid",
+  has condition-immunity "prone",
+  has skill-stealth 5;
+
+$mimic_shape isa trait, has name "Shapechanger", has description "The mimic can use its action to polymorph into an object or back into its true, amorphous form. Its statistics are the same in each form. Any equipment it is wearing or carrying isn't transformed. It reverts to its true form if it dies.";
+has-ability ($mimic, $mimic_shape);
+
+$mimic_adhesive isa trait, has name "Adhesive (Object Form Only)", has description "The mimic adheres to anything that touches it. A Huge or smaller creature adhered to the mimic is also grappled by it (escape DC 13). Ability checks made to escape this grapple have disadvantage.";
+has-ability ($mimic, $mimic_adhesive);
+
+$mimic_false isa trait, has name "False Appearance (Object Form Only)", has description "While the mimic remains motionless, it is indistinguishable from an ordinary object.";
+has-ability ($mimic, $mimic_false);
+
+$mimic_grappler isa trait, has name "Grappler", has description "The mimic has advantage on attack rolls against any creature grappled by it.";
+has-ability ($mimic, $mimic_grappler);
+
+$mimic_bite isa action, has name "Bite", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) piercing damage plus 4 (1d8) acid damage.";
+has-ability ($mimic, $mimic_bite);
+
+$mimic_pseudopod isa action, has name "Pseudopod", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d8 + 3) bludgeoning damage. If the mimic is in object form, the target is subjected to its Adhesive trait.";
+has-ability ($mimic, $mimic_pseudopod);
+
+containment (container: $roomJ, contained: $mimic);
+
+# Items
+
+# Mirror (Area C)
+$mirrorC isa item, has name "Magic Mirror", has id "yondergate-mirror-c", has description "A mirror that reflects the clockwork minotaur as a golem minotaur. Easily broken.";
+containment (container: $roomC, contained: $mirrorC);
+
+# Mirror (Area N)
+$mirrorN isa item, has name "Magic Mirror", has id "yondergate-mirror-n", has description "A mirror that reflects the golem minotaur as a clockwork minotaur. The mirror is see-through when approached from the spider pit.";
+containment (container: $roomN, contained: $mirrorN);
+
+# Magical Sword (Area F - with Skeleton King)
+$magsword isa magic-item,
+  has name "Longsword +1",
+  has id "yondergate-longsword-plus1",
+  has description "A magical longsword with a +1 bonus to attack and damage rolls. Wielded by the Skeleton King.",
+  has rarity "Uncommon",
+  has requires-attunement false;
+containment (container: $roomF, contained: $magsword);
+
+# Ornate Chest (Area J)
+$ornate_chest isa box-container,
+  has name "Ornate Chest",
+  has id "yondergate-ornate-chest",
+  has description "An ornate chest sitting on a wooden table (which is actually a mimic). Contains sleep gas trap and treasure.";
+containment (container: $roomJ, contained: $ornate_chest);
+
+$sleep_gas isa trap,
+  has name "Sleep Gas Trap",
+  has id "yondergate-sleep-gas",
+  has description "A magical trap that releases sleep gas when the chest is opened.",
+  has trap-type "Magical",
+  has save-dc 15,
+  has save-ability "CON",
+  has damage-dice "0",
+  has trigger-description "Opening or removing the chest",
+  has disarm-dc 18;
+containment (container: $ornate_chest, contained: $sleep_gas);
+
+$chest_gold isa item,
+  has name "Gold Coins",
+  has id "yondergate-chest-gold",
+  has description "A modest amount of gold coins (approximately 200 gp worth).";
+containment (container: $ornate_chest, contained: $chest_gold);
+
+$chest_gems isa item,
+  has name "Gemstones",
+  has id "yondergate-chest-gems",
+  has description "Several small gemstones worth approximately 100 gp total.";
+containment (container: $ornate_chest, contained: $chest_gems);
+
+# Bones and treasure in spider pit (Area M)
+$pit_bones isa item,
+  has name "Pile of Bones",
+  has id "yondergate-pit-bones",
+  has description "A collection of bones from previous victims of the spiders.";
+containment (container: $roomM, contained: $pit_bones);
+
+$pit_gold isa item,
+  has name "Gold Coins",
+  has id "yondergate-pit-gold",
+  has description "Modest treasure scattered among the bones (approximately 150 gp).";
+containment (container: $roomM, contained: $pit_gold);
+
+$pit_silver isa item,
+  has name "Silver Necklace",
+  has id "yondergate-pit-necklace",
+  has description "A tarnished silver necklace worth about 50 gp.";
+containment (container: $roomM, contained: $pit_silver);
+
+# Control Room Model (Area G)
+$control_model isa magic-item,
+  has name "Yondergate Model",
+  has id "yondergate-control-model",
+  has description "A magical model of the Yondergate Labyrinth on the floor, complete with figurines of all creatures within - including the party. Moving figurines relocates creatures to corresponding places in the labyrinth. Figurines cannot be removed from the room. If a normal-sized creature is placed in the model, it appears many times larger in the labyrinth.",
+  has rarity "Legendary",
+  has requires-attunement false;
+containment (container: $roomG, contained: $control_model);
+
+# Gate-compass (Area K)
+$gate_compass isa magic-item,
+  has name "Gate-compass",
+  has id "yondergate-gate-compass",
+  has description "Bas-reliefs on the wall match those from the Arrival Points. The compass points toward one arrival point that is not of the party's origin. Can be spun from its initial position to change the destination.",
+  has rarity "Rare",
+  has requires-attunement false;
+containment (container: $roomK, contained: $gate_compass);
+
+# Dead Wizard Remains (Area H)
+$wizard_corpse isa item,
+  has name "Dead Wizard's Remains",
+  has id "yondergate-wizard-corpse",
+  has description "The grotesque remains of a dead wizard, fused with the floor and wall. May contain spell components or magical items upon closer inspection.";
+containment (container: $roomH, contained: $wizard_corpse);
+
+# Stone Mouth (Area B) - special feature
+$stone_mouth isa item,
+  has name "Stone Mouth",
+  has id "yondergate-stone-mouth",
+  has description "A stone mouth embedded in the wall. If spoken to, it will say: 'The meat hates the metal, the metal hates the meat. You'll likely die in here.'";
+containment (container: $roomB, contained: $stone_mouth);
+
+# ============================================================================
+# Random Encounter Table
+# ============================================================================
+
+$random_encounters isa random-encounter-table,
+  has id "yondergate-random-encounters",
+  has name "Yondergate Random Encounters",
+  has description "Random encounters in the Yondergate labyrinth",
+  has trigger-condition "1 in 6 chance during a lull, automatic at area I-2";
+
+dungeon-encounters ($d, $random_encounters);
+
+# Create a template creature for each encounter type to reference
+$keeper_template isa monster,
+  has name "Keeper of the Gate",
+  has id "yondergate-keeper-template",
+  has description "Hypnotically swaying empty robes wielding long knives. Constantly whisper unintelligibly.",
+  has challenge-rating "2",
+  has hit-points 32,
+  has armor-class 13,
+  has alignment "Chaotic Neutral",
+  has strength 10,
+  has dexterity 16,
+  has constitution 12,
+  has intelligence 8,
+  has wisdom 14,
+  has charisma 16,
+  has proficiency-bonus 2,
+  has passive-perception 12,
+  has speed-walk 30,
+  has size "Medium",
+  has creature-type "Aberration";
+
+$keeper_hypnotic isa trait, has name "Hypnotic Sway", has description "Any creature that starts its turn within 30 feet of the Keeper must succeed on a DC 13 Wisdom saving throw or become confused until the start of its next turn.";
+has-ability ($keeper_template, $keeper_hypnotic);
+
+$keeper_knife isa action, has name "Long Knife", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 3) slashing damage.";
+has-ability ($keeper_template, $keeper_knife);
+
+$keeper_whisper isa trait, has name "Unintelligible Whispers", has description "The Keeper constantly whispers in an unknown language, creating an unsettling atmosphere.";
+has-ability ($keeper_template, $keeper_whisper);
+
+# Encounter Entry 1: 1-4 Keepers of the Gate
+$encounter1 isa encounter-entry,
+  has id "yondergate-encounter-1",
+  has name "Keepers of the Gate",
+  has description "1-4 Keepers of the Gate: Hypnotically swaying empty robes (save vs. mind or confused), wielding long knives. Constantly whisper unintelligibly.",
+  has encounter-number 1,
+  has quantity-min 1,
+  has quantity-max 4,
+  has quantity-dice "1d4";
+
+has-encounter-entry ($random_encounters, $encounter1);
+group-template ($encounter1, $keeper_template);
+
+# Encounter Entry 2: 2-8 Gate-rats (using existing gate-rat as template)
+$encounter2 isa encounter-entry,
+  has id "yondergate-encounter-2",
+  has name "Gate-rats",
+  has description "2-8 Gate-rats: like Blink Dogs, but vicious wall-climbing rodents whose bite causes disease. They enjoy dropping from above, biting, and blinking back up to safety.",
+  has encounter-number 2,
+  has quantity-min 2,
+  has quantity-max 8,
+  has quantity-dice "2d4";
+
+has-encounter-entry ($random_encounters, $encounter2);
+group-template ($encounter2, $gaterat1);
+
+# Encounter Entry 3: 2-5 Improved Skeletons (using existing improved skeleton as template)
+$encounter3 isa encounter-entry,
+  has id "yondergate-encounter-3",
+  has name "Improved Skeletons",
+  has description "2-5 Improved Skeletons -- bones lashed/riveted together with metal.",
+  has encounter-number 3,
+  has quantity-min 2,
+  has quantity-max 5,
+  has quantity-dice "1d4+1";
+
+has-encounter-entry ($random_encounters, $encounter3);
+group-template ($encounter3, $improved_skel1);
+
+# Create template creatures for remaining encounters
+$scorched_ape isa monster,
+  has name "Scorched Juvenile Ape",
+  has id "yondergate-scorched-ape-template",
+  has description "A juvenile ape with burned fur and skin, confused and afraid. Attacks out of fear rather than malice.",
+  has challenge-rating "1/2",
+  has hit-points 19,
+  has armor-class 12,
+  has alignment "Unaligned",
+  has strength 16,
+  has dexterity 14,
+  has constitution 14,
+  has intelligence 6,
+  has wisdom 12,
+  has charisma 7,
+  has proficiency-bonus 2,
+  has passive-perception 13,
+  has speed-walk 30,
+  has speed-climb 30,
+  has size "Medium",
+  has creature-type "Beast",
+  has skill-athletics 5,
+  has skill-perception 3;
+
+$ape_fist isa action, has name "Fist", has description "Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 6 (1d6 + 3) bludgeoning damage.";
+has-ability ($scorched_ape, $ape_fist);
+
+$ape_rock isa action, has name "Rock", has description "Ranged Weapon Attack: +5 to hit, range 25/50 ft., one target. Hit: 6 (1d6 + 3) bludgeoning damage.";
+has-ability ($scorched_ape, $ape_rock);
+
+# Encounter Entry 4: A scorched juvenile ape
+$encounter4 isa encounter-entry,
+  has id "yondergate-encounter-4",
+  has name "Scorched Ape",
+  has description "A scorched juvenile ape, confused and afraid.",
+  has encounter-number 4,
+  has quantity-min 1,
+  has quantity-max 1,
+  has quantity-dice "1";
+
+has-encounter-entry ($random_encounters, $encounter4);
+group-template ($encounter4, $scorched_ape);
+
+$lost_townsperson isa npc,
+  has name "Lost Townsfolk",
+  has id "yondergate-townsperson-template",
+  has description "Desperate townsfolk driven mad with hunger and fear, armed with crude bone clubs and pocket knives.",
+  has challenge-rating "1/8",
+  has hit-points 4,
+  has armor-class 10,
+  has alignment "Chaotic Neutral",
+  has strength 10,
+  has dexterity 10,
+  has constitution 10,
+  has intelligence 8,
+  has wisdom 6,
+  has charisma 8,
+  has proficiency-bonus 2,
+  has passive-perception 8,
+  has speed-walk 30,
+  has size "Medium",
+  has creature-type "Humanoid",
+  has is-friendly false;
+
+$towns_club isa action, has name "Bone Club", has description "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) bludgeoning damage.";
+has-ability ($lost_townsperson, $towns_club);
+
+$towns_knife isa action, has name "Pocket Knife", has description "Melee Weapon Attack: +2 to hit, reach 5 ft., one target. Hit: 2 (1d4) piercing damage.";
+has-ability ($lost_townsperson, $towns_knife);
+
+# Encounter Entry 5: 1-6 lost townsfolk
+$encounter5 isa encounter-entry,
+  has id "yondergate-encounter-5",
+  has name "Lost Townsfolk",
+  has description "1-6 lost townsfolk, mad with hunger and fear, with bone clubs and pocket knives.",
+  has encounter-number 5,
+  has quantity-min 1,
+  has quantity-max 6,
+  has quantity-dice "1d6";
+
+has-encounter-entry ($random_encounters, $encounter5);
+group-template ($encounter5, $lost_townsperson);
+
+$wizard_apprentice isa npc,
+  has name "Wizard's Apprentice",
+  has id "yondergate-apprentice-template",
+  has description "An apprentice to the wizard of area H, looking guilty and nervous. May know secrets about the dungeon.",
+  has challenge-rating "1/4",
+  has hit-points 9,
+  has armor-class 10,
+  has alignment "True Neutral",
+  has strength 8,
+  has dexterity 12,
+  has constitution 10,
+  has intelligence 14,
+  has wisdom 11,
+  has charisma 10,
+  has proficiency-bonus 2,
+  has passive-perception 10,
+  has speed-walk 30,
+  has size "Medium",
+  has creature-type "Humanoid",
+  has is-friendly false;
+
+$app_dagger isa action, has name "Dagger", has description "Melee or Ranged Weapon Attack: +3 to hit, reach 5 ft. or range 20/60 ft., one target. Hit: 3 (1d4 + 1) piercing damage.";
+has-ability ($wizard_apprentice, $app_dagger);
+
+# Encounter Entry 6: Apprentice to the wizard
+$encounter6 isa encounter-entry,
+  has id "yondergate-encounter-6",
+  has name "Wizard's Apprentice",
+  has description "Apprentice to the wizard of area H, looking guilty.",
+  has encounter-number 6,
+  has quantity-min 1,
+  has quantity-max 1,
+  has quantity-dice "1";
+
+has-encounter-entry ($random_encounters, $encounter6);
+group-template ($encounter6, $wizard_apprentice);
+
+# ============================================================================
+# Variable Enemy Groups (demonstrating creature-group for areas with "2-5" enemies)
+# ============================================================================
+
+# Room F already has specific creatures, but we can add a creature-group to show variable spawns
+$skeleton_group isa creature-group,
+  has id "yondergate-skeleton-group",
+  has name "Skeleton Assembly Group",
+  has description "A variable number of improved skeletons being assembled by the Skeleton King",
+  has quantity-min 2,
+  has quantity-max 5,
+  has quantity-dice "1d4+1";
+
+group-template ($skeleton_group, $improved_skel1);
+containment (container: $roomF, contained: $skeleton_group);
+
+$spider_group isa creature-group,
+  has id "yondergate-spider-group",
+  has name "Spider Pit Colony",
+  has description "A colony of giant spiders in the pit",
+  has quantity-min 2,
+  has quantity-max 5,
+  has quantity-dice "1d4+1";
+
+group-template ($spider_group, $spider1);
+containment (container: $roomM, contained: $spider_group);
+
+# ============================================================================
+# Additional Traps
+# ============================================================================
+
+# Concealed pit trap in Area E
+$pit_trap isa trap,
+  has id "yondergate-pit-trap",
+  has name "Web-filled Pit Trap",
+  has description "A concealed pit filled with webs. Anyone falling into the pit is teleported to area M (spider pit).",
+  has trap-type "Magical",
+  has save-dc 13,
+  has save-ability "DEX",
+  has damage-dice "2d6",
+  has damage-type "bludgeoning",
+  has trigger-description "Walking over the concealed pit",
+  has disarm-dc 15;
+
+containment (container: $roomE, contained: $pit_trap);
