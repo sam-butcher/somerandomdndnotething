@@ -27,9 +27,8 @@ Frontend-only Angular application for browsing D&D dungeons with creatures, item
 ### Data
 
 - TypeDB 3.7.0 database
-- `data/schema.ttql`: TypeQL schema modelling dungeons and characters
-- Default connection: TypeDB Cloud at `https://n69m16-0.cluster.typedb.com:80`
-- Database: `sam-hackathon`
+- `data/schema.ttql`: TypeQL schema modelling dungeons, characters, and items
+- `data/example.ttql`: Example query to insert data about a dungeon containing a monster and a number of items
 
 ## Development Commands
 

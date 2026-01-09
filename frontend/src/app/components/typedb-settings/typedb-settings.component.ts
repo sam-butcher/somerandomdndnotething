@@ -79,22 +79,4 @@ export class TypeDBSettingsComponent implements OnInit {
   async onDisconnect(): Promise<void> {
     await this.connectionService.disconnect();
   }
-
-  onUseCloudDefaults(): void {
-    this.connectionForm.patchValue({
-      address: 'https://n69m16-0.cluster.typedb.com:80',
-      database: 'sam-hackathon',
-      username: 'admin',
-      tlsEnabled: true,
-    });
-  }
-
-  onUseLocalDefaults(): void {
-    this.connectionForm.patchValue({
-      address: 'localhost:1729',
-      database: 'dnd',
-      username: 'admin',
-      tlsEnabled: false,
-    });
-  }
 }

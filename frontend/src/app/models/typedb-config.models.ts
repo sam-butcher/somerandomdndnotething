@@ -13,9 +13,9 @@ export interface TypeDBConnectionStatus {
 }
 
 export const DEFAULT_CONFIG: TypeDBConnectionConfig = {
-  address: 'https://n69m16-0.cluster.typedb.com:80',
-  database: 'sam-hackathon',
+  address: 'localhost:1729',
+  database: 'dnd',
   username: 'admin',
   password: '',
-  tlsEnabled: true,
+  tlsEnabled: false,
 };
