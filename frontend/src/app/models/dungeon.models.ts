@@ -63,6 +63,24 @@ export enum SaveAbility {
   CHA = 'CHA'
 }
 
+export enum ConnectionType {
+  DOOR = 'Door',
+  CORRIDOR = 'Corridor',
+  PASSAGE = 'Passage'
+}
+
+export interface RoomConnection {
+  targetRoomId: string;
+  targetRoomName: string;
+  targetRoomIndex?: number;
+  'connection-type': ConnectionType;
+  'is-secret'?: boolean;
+  'is-one-way'?: boolean;
+  'is-locked'?: boolean;
+  description?: string;
+  direction: 'outgoing' | 'incoming';
+}
+
 export interface AbilityScores {
   strength: number;
   dexterity: number;
@@ -176,6 +194,7 @@ export interface DungeonGraph {
 }
 
 export interface RoomData {
+  id: string;
   name: string;
   description?: string;
   creatures: CreatureData[];
@@ -183,6 +202,7 @@ export interface RoomData {
   containers: ContainerData[];
   traps: TrapData[];
   'creature-groups': CreatureGroupData[];
+  connections: RoomConnection[];
 }
 
 // Discriminated union types matching backend sealed classes

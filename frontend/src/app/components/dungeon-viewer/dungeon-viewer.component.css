@@ -316,3 +316,110 @@
   }
 }
 
+/* Connections Section */
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.connection-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid #8b7355;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.connection-item[style*="cursor: pointer"]:hover {
+  background: rgba(139, 115, 85, 0.15);
+  transform: translateX(4px);
+}
+
+.connection-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.connection-details {
+  flex: 1;
+}
+
+.connection-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.connection-target {
+  font-size: 1rem;
+  color: #2c1810;
+}
+
+.connection-type-label {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+.connection-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.locked-badge {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.secret-badge {
+  background: #ffd700;
+  color: #8b4513;
+}
+
+.oneway-badge {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.connection-direction {
+  font-size: 0.85rem;
+  color: #888;
+  margin-left: auto;
+}
+
+.connection-description {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0.25rem 0 0 0;
+  font-style: italic;
+}
+
+/* Connection type specific styling */
+.connection-door {
+  border-left-color: #8b4513;
+}
+
+.connection-corridor {
+  border-left-color: #696969;
+}
+
+.connection-passage {
+  border-left-color: #4a7c59;
+}
+
+.connection-secret {
+  border-left-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.connection-locked {
+  border-left-color: #c62828;
+}

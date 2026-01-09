@@ -17,7 +17,9 @@ import {
   TrapType,
   SaveAbility,
   CreatureGroupData,
-  RandomEncounterTable
+  RandomEncounterTable,
+  RoomConnection,
+  ConnectionType
 } from '../../models/dungeon.models';
 
 @Component({
@@ -113,6 +115,22 @@ export class DungeonViewer implements OnInit {
     return this.expandedRooms().has(index);
   }
 
+  navigateToRoom(roomIndex: number | undefined): void {
+    if (roomIndex === undefined) return;
+
+    // Expand the target room
+    const expanded = this.expandedRooms();
+    const newExpanded = new Set(expanded);
+    newExpanded.add(roomIndex);
+    this.expandedRooms.set(newExpanded);
+
+    // Scroll to room after render
+    setTimeout(() => {
+      const element = document.querySelector(`[data-room-index="${roomIndex}"]`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   private filterRoom(room: RoomData, roomIndex: number, searchLower: string): RoomData {
     return {
       ...room,
@@ -197,5 +215,24 @@ export class DungeonViewer implements OnInit {
       case TrapType.HYBRID: return 'trap-hybrid';
       default: return '';
     }
+  }
+
+  getConnectionIcon(connection: RoomConnection): string {
+    if (connection['is-locked']) return '🔒';
+    if (connection['is-secret']) return '🗝️';
+    switch (connection['connection-type']) {
+      case ConnectionType.DOOR: return '🚪';
+      case ConnectionType.CORRIDOR: return '↔️';
+      case ConnectionType.PASSAGE: return '🚶';
+      default: return '→';
+    }
+  }
+
+  getConnectionClass(connection: RoomConnection): string {
+    const classes = [`connection-${connection['connection-type'].toLowerCase()}`];
+    if (connection['is-secret']) classes.push('connection-secret');
+    if (connection['is-locked']) classes.push('connection-locked');
+    if (connection['is-one-way']) classes.push('connection-oneway');
+    return classes.join(' ');
   }
 }

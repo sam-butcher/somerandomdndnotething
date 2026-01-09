@@ -24,6 +24,8 @@ import {
   CreatureGroupData,
   RandomEncounterTable,
   EncounterEntryData,
+  ConnectionType,
+  RoomConnection,
 } from '../models/dungeon.models';
 import { QueryResponse } from '@typedb/driver-http';
 
@@ -35,6 +37,18 @@ interface ContainmentEdge {
 
 interface EntityAttributes {
   [key: string]: any;
+}
+
+interface ConnectionData {
+  sourceRoomId: string;
+  targetRoomId: string;
+  sourceRoomName: string;
+  targetRoomName: string;
+  connectionType: string;
+  isSecret?: boolean;
+  isOneWay?: boolean;
+  isLocked?: boolean;
+  description?: string;
 }
 
 @Injectable({
@@ -71,14 +85,15 @@ export class TypeDBQueryService {
   }
 
   /**
-   * Fetch complete dungeon data including structure, entity details, and random encounters
-   * Returns: dungeon metadata, rooms, containment relationships, entity details, and random encounter tables
+   * Fetch complete dungeon data including structure, entity details, random encounters, and room connections
+   * Returns: dungeon metadata, rooms, containment relationships, entity details, random encounter tables, and connections
    */
   private async fetchDungeonStructure(dungeonId: string): Promise<{
     dungeon: { id: string; name: string; description?: string };
     rooms: Array<{ id: string; name: string; description?: string }>;
     containmentEdges: ContainmentEdge[];
     randomEncounters: RandomEncounterTable[];
+    connections: ConnectionData[];
   } | null> {
     const query = `
       match
@@ -140,6 +155,44 @@ export class TypeDBQueryService {
                 ]
               };
             ]
+          };
+        ],
+        "connections": [
+          match
+            dungeon-composition (dungeon: $dungeon, room-in-dungeon: $source_room);
+            $source_room has id $source_id;
+            $source_room has name $source_name;
+            {
+              # Outgoing connections
+              $conn isa room-connection, links (
+                source-room: $source_room,
+                target-room: $target_room
+              );
+              $target_room has id $target_id;
+              $target_room has name $target_name;
+              $conn has connection-type $conn_type;
+            } or {
+              # Incoming bidirectional connections (not one-way)
+              $conn isa room-connection, links (
+                source-room: $other_room,
+                target-room: $source_room
+              );
+              not { $conn has is-one-way true; };
+              $other_room has id $target_id;
+              $other_room has name $target_name;
+              $conn has connection-type $conn_type;
+              $target_room is $other_room;
+            };
+          fetch {
+            "sourceRoomId": $source_id,
+            "targetRoomId": $target_id,
+            "sourceRoomName": $source_name,
+            "targetRoomName": $target_name,
+            "connectionType": $conn_type,
+            "isSecret": $conn.is-secret,
+            "isOneWay": $conn.is-one-way,
+            "isLocked": $conn.is-locked,
+            "description": $conn.description,
           };
         ]
       };
@@ -216,7 +269,23 @@ export class TypeDBQueryService {
         });
       }
 
-      return { dungeon, rooms, containmentEdges, randomEncounters };
+      // Parse connections
+      const connections: ConnectionData[] = [];
+      for (const conn of result.connections || []) {
+        connections.push({
+          sourceRoomId: conn.sourceRoomId as string,
+          targetRoomId: conn.targetRoomId as string,
+          sourceRoomName: conn.sourceRoomName as string,
+          targetRoomName: conn.targetRoomName as string,
+          connectionType: conn.connectionType as string,
+          isSecret: conn.isSecret as boolean | undefined,
+          isOneWay: conn.isOneWay as boolean | undefined,
+          isLocked: conn.isLocked as boolean | undefined,
+          description: conn.description as string | undefined,
+        });
+      }
+
+      return { dungeon, rooms, containmentEdges, randomEncounters, connections };
     });
   }
 
@@ -228,10 +297,27 @@ export class TypeDBQueryService {
     rooms: Array<{ id: string; name: string; description?: string }>;
     containmentEdges: ContainmentEdge[];
     randomEncounters: RandomEncounterTable[];
+    connections: ConnectionData[];
   }): DungeonGraph {
-    // Build rooms with their contents
+    // Build room ID to index and name maps
+    const roomIdToIndex = new Map<string, number>();
+    const roomIdToName = new Map<string, string>();
+    structure.rooms.forEach((room, idx) => {
+      roomIdToIndex.set(room.id, idx);
+      roomIdToName.set(room.id, room.name);
+    });
+
+    // Build rooms with their contents and connections
     const rooms: RoomData[] = structure.rooms.map((roomData) =>
-      this.buildRoom(roomData.id, roomData.name, roomData.description, structure.containmentEdges)
+      this.buildRoom(
+        roomData.id,
+        roomData.name,
+        roomData.description,
+        structure.containmentEdges,
+        structure.connections,
+        roomIdToIndex,
+        roomIdToName
+      )
     );
 
     return {
@@ -246,6 +332,9 @@ export class TypeDBQueryService {
     roomName: string,
     roomDescription: string | undefined,
     containmentEdges: ContainmentEdge[],
+    connections: ConnectionData[],
+    roomIdToIndex: Map<string, number>,
+    roomIdToName: Map<string, string>
   ): RoomData {
     const roomEdges = containmentEdges.filter(x => x.containerId === roomId);
 
@@ -275,7 +364,29 @@ export class TypeDBQueryService {
       }
     }
 
+    // Build connections for this room
+    const roomConnections: RoomConnection[] = connections
+      .filter(c => c.sourceRoomId === roomId || c.targetRoomId === roomId)
+      .map(c => {
+        const isOutgoing = c.sourceRoomId === roomId;
+        const targetRoomId = isOutgoing ? c.targetRoomId : c.sourceRoomId;
+        const targetName = roomIdToName.get(targetRoomId) || c.targetRoomName;
+
+        return {
+          targetRoomId: targetRoomId,
+          targetRoomName: targetName,
+          targetRoomIndex: roomIdToIndex.get(targetRoomId),
+          'connection-type': c.connectionType as ConnectionType,
+          'is-secret': c.isSecret,
+          'is-one-way': c.isOneWay,
+          'is-locked': c.isLocked,
+          description: c.description,
+          direction: isOutgoing ? 'outgoing' : 'incoming'
+        } as RoomConnection;
+      });
+
     return {
+      id: roomId,
       name: roomName,
       description: roomDescription,
       creatures,
@@ -283,6 +394,7 @@ export class TypeDBQueryService {
       containers,
       traps,
       'creature-groups': creatureGroups,
+      connections: roomConnections,
     };
   }
 

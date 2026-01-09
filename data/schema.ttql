@@ -113,6 +113,12 @@ attribute trap-type, value string @values("Mechanical", "Magical", "Hybrid");
 attribute trigger-description, value string;
 attribute disarm-dc, value integer;
 
+# Room connection attributes
+attribute connection-type, value string @values("Door", "Corridor", "Passage");
+attribute is-secret, value boolean;
+attribute is-one-way, value boolean;
+attribute is-locked, value boolean;
+
 # ============================================================================
 # Entity Types - Creatures
 # ============================================================================
@@ -197,7 +203,9 @@ entity container @abstract, sub containable,
     plays containment:container;
 
 entity room, sub container,
-    plays dungeon-composition:room-in-dungeon;
+    plays dungeon-composition:room-in-dungeon,
+    plays room-connection:source-room,
+    plays room-connection:target-room;
 
 entity box-container, sub container;
 
@@ -315,6 +323,15 @@ relation has-encounter-entry,
 relation group-template,
     relates group,
     relates template-creature;
+
+relation room-connection,
+    relates source-room,
+    relates target-room,
+    owns connection-type,
+    owns is-secret,
+    owns is-one-way,
+    owns is-locked,
+    owns description;
 
 # ============
 # Functions

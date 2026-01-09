@@ -144,7 +144,7 @@
       <!-- Rooms List -->
       <div class="rooms-list">
         @for (room of dung.rooms; track $index) {
-          <div class="room-panel parchment-panel">
+          <div class="room-panel parchment-panel" [attr.data-room-index]="$index">
             <!-- Room Header (Clickable) -->
             <div class="room-header" (click)="toggleRoom($index)">
               <span class="expand-icon">{{ isRoomExpanded($index) ? '▼' : '▶' }}</span>
@@ -327,6 +327,46 @@
                         [expanded]="false"
                       />
                     }
+                  </div>
+                }
+
+                <!-- Connections -->
+                @if (room.connections && room.connections.length > 0) {
+                  <div class="content-section">
+                    <h4 class="section-title">Connections</h4>
+                    <div class="connections-list">
+                      @for (connection of room.connections; track connection.targetRoomId) {
+                        <div
+                          class="connection-item"
+                          [class]="getConnectionClass(connection)"
+                          (click)="navigateToRoom(connection.targetRoomIndex)"
+                          [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
+                        >
+                          <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
+                          <div class="connection-details">
+                            <div class="connection-header">
+                              <strong class="connection-target">{{ connection.targetRoomName }}</strong>
+                              <span class="connection-type-label">{{ connection['connection-type'] }}</span>
+                              @if (connection['is-locked']) {
+                                <span class="connection-badge locked-badge">Locked</span>
+                              }
+                              @if (connection['is-secret']) {
+                                <span class="connection-badge secret-badge">Secret</span>
+                              }
+                              @if (connection['is-one-way'] && connection.direction === 'outgoing') {
+                                <span class="connection-badge oneway-badge">One-way</span>
+                              }
+                              @if (connection.direction === 'incoming') {
+                                <span class="connection-direction">← From</span>
+                              }
+                            </div>
+                            @if (connection.description) {
+                              <p class="connection-description">{{ connection.description }}</p>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
               </div>
