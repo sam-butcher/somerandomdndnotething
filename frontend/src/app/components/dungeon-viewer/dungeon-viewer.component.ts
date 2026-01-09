@@ -1,25 +1,21 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DungeonService } from '../../services/dungeon.service';
 import { CreatureStatblock } from '../creature-statblock/creature-statblock';
 import { ContainerDisplay } from '../container-display/container-display.component';
 import {
+  Alignment,
+  ConnectionType,
+  ContainerData,
+  CreatureData,
   DungeonGraph,
   DungeonSummary,
-  RoomData,
-  CreatureData,
   ItemData,
-  ContainerData,
   Rarity,
-  Alignment,
-  TrapData,
-  TrapType,
-  SaveAbility,
-  CreatureGroupData,
-  RandomEncounterTable,
   RoomConnection,
-  ConnectionType
+  RoomData,
+  TrapType
 } from '../../models/dungeon.models';
 
 @Component({
@@ -48,7 +44,6 @@ export class DungeonViewer implements OnInit {
 
   // Expand/collapse state
   protected readonly expandedRooms = signal(new Set<number>());
-  protected readonly expandedContainers = signal(new Map<string, boolean>());
 
   // Computed filtered dungeon
   protected readonly filteredDungeon = computed(() => {
@@ -90,6 +85,7 @@ export class DungeonViewer implements OnInit {
 
     this.dungeonService.getDungeon(dungeonId).subscribe({
       next: (data) => {
+        (window as any)["dungeon"] = data;
         this.dungeon.set(data);
         this.loading.set(false);
       },
