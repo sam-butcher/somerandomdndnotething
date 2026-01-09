@@ -76,8 +76,6 @@ export class TypeDBConnectionService {
       { transactionTimeoutMillis: 30000 }
     );
 
-    console.log('asdf', queryString, queryResponse);
-
     if (!isOkResponse(queryResponse)) {
       throw new Error('Query failed');
     }
