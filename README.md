@@ -1,6 +1,6 @@
 # Some random D&D note thing
 
-Storing and displaying the structure of a D&D (5E 2014) dungeon in TypeDB.
+Storing and displaying the structure of a D&D (5E 2014 [probably also works for 2024 if you really insist]) dungeon in TypeDB.
 
 ## Setup
 
