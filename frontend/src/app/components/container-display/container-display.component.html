@@ -11,7 +11,7 @@
       }
 
       <!-- Creatures in this container -->
-      @if (container.creatures && container.creatures.length > 0) {
+      @if (container.creatures.length > 0) {
         <div class="content-section">
           <h4 class="section-title">Creatures</h4>
           <div class="creatures-list">
@@ -28,8 +28,8 @@
                     <app-creature-statblock
                       [statblock]="creature.statblock"
                       [creatureName]="creature.name"
-                      [hitPoints]="creature.hitPoints"
-                      [armorClass]="creature.armorClass"
+                      [hitPoints]="creature['hit-points']"
+                      [armorClass]="creature['armor-class']"
                       [alignment]="creature.alignment"
                     />
                   } @else {
@@ -37,18 +37,18 @@
                       @if (creature.level) {
                         <span class="stat">Level: {{ creature.level }}</span>
                       }
-                      @if (creature.hitPoints) {
-                        <span class="stat">HP: {{ creature.hitPoints }}</span>
+                      @if (creature['hit-points']) {
+                        <span class="stat">HP: {{ creature['hit-points'] }}</span>
                       }
-                      @if (creature.armorClass) {
-                        <span class="stat">AC: {{ creature.armorClass }}</span>
+                      @if (creature['armor-class']) {
+                        <span class="stat">AC: {{ creature['armor-class'] }}</span>
                       }
                       @if (creature.alignment) {
                         <span class="stat" [class]="getAlignmentClass(creature.alignment)">{{ creature.alignment }}</span>
                       }
-                      @if (creature.type === 'npc' && creature.isFriendly !== null) {
-                        <span class="stat" [class.friendly]="creature.isFriendly">
-                          {{ creature.isFriendly ? 'Friendly' : 'Hostile' }}
+                      @if (creature.type === 'npc' && creature['is-friendly'] !== null) {
+                        <span class="stat" [class.friendly]="creature['is-friendly']">
+                          {{ creature['is-friendly'] ? 'Friendly' : 'Hostile' }}
                         </span>
                       }
                     </div>
@@ -61,7 +61,7 @@
       }
 
       <!-- Items in this container -->
-      @if (container.items && container.items.length > 0) {
+      @if (container.items.length > 0) {
         <div class="content-section">
           <h4 class="section-title">Items</h4>
           <div class="items-list">
@@ -77,7 +77,7 @@
                       @if (item.rarity) {
                         <span class="stat" [class]="getRarityClass(item.rarity)">{{ item.rarity }}</span>
                       }
-                      @if (item.requiresAttunement) {
+                      @if (item['requires-attunement']) {
                         <span class="stat attunement">Requires Attunement</span>
                       }
                     </div>
@@ -90,7 +90,7 @@
       }
 
       <!-- Traps in this container -->
-      @if (container.traps && container.traps.length > 0) {
+      @if (container.traps.length > 0) {
         <div class="content-section">
           <h4 class="section-title">Traps</h4>
           <div class="traps-list">
@@ -102,21 +102,21 @@
                     <p class="trap-description">{{ trap.description }}</p>
                   }
                   <div class="trap-stats">
-                    @if (trap.trapType) {
-                      <span class="stat" [class]="getTrapTypeClass(trap.trapType)">{{ trap.trapType }}</span>
+                    @if (trap['trap-type']) {
+                      <span class="stat" [class]="getTrapTypeClass(trap['trap-type'])">{{ trap['trap-type'] }}</span>
                     }
-                    @if (trap.saveDC) {
-                      <span class="stat">Save DC: {{ trap.saveDC }} {{ trap.saveAbility }}</span>
+                    @if (trap['save-dc']) {
+                      <span class="stat">Save DC: {{ trap['save-dc'] }} {{ trap['save-ability'] }}</span>
                     }
-                    @if (trap.damageDice) {
-                      <span class="stat">Damage: {{ trap.damageDice }} {{ trap.damageTypes.join(', ') }}</span>
+                    @if (trap['damage-dice']) {
+                      <span class="stat">Damage: {{ trap['damage-dice'] }} {{ trap['damage-types'].join(', ') }}</span>
                     }
-                    @if (trap.disarmDC) {
-                      <span class="stat">Disarm DC: {{ trap.disarmDC }}</span>
+                    @if (trap['disarm-dc']) {
+                      <span class="stat">Disarm DC: {{ trap['disarm-dc'] }}</span>
                     }
                   </div>
-                  @if (trap.triggerDescription) {
-                    <p class="trap-trigger"><strong>Trigger:</strong> {{ trap.triggerDescription }}</p>
+                  @if (trap['trigger-description']) {
+                    <p class="trap-trigger"><strong>Trigger:</strong> {{ trap['trigger-description'] }}</p>
                   }
                 </div>
               </div>
@@ -126,7 +126,7 @@
       }
 
       <!-- Nested containers (RECURSIVE!) -->
-      @if (container.containers && container.containers.length > 0) {
+      @if (container.containers.length > 0) {
         <div class="content-section">
           <h4 class="section-title">Containers</h4>
           @for (nestedContainer of container.containers; track $index) {

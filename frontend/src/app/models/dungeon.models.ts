@@ -113,33 +113,53 @@ export interface Skills {
 export interface CreatureAbility {
   name: string;
   description: string;
-  actionCost?: number;
+  'action-cost'?: number;
+  'ability-type': 'trait' | 'action' | 'bonus-action' | 'reaction' |
+                  'legendary-action' | 'lair-action' | 'mythic-action';
 }
 
 export interface StatblockData {
   abilityScores: AbilityScores;
   size: CreatureSize;
   type: CreatureType;
-  challengeRating?: string;
-  experiencePoints?: number;
-  proficiencyBonus: number;
+  'challenge-rating'?: string;
+  'experience-points'?: number;
+  'proficiency-bonus': number;
   speed: SpeedData;
-  savingThrows?: SavingThrows;
-  skills?: Skills;
-  damageResistances: string[];
-  damageImmunities: string[];
-  conditionImmunities: string[];
-  damageVulnerabilities: string[];
+  // Saving throws flattened
+  'save-strength'?: number;
+  'save-dexterity'?: number;
+  'save-constitution'?: number;
+  'save-intelligence'?: number;
+  'save-wisdom'?: number;
+  'save-charisma'?: number;
+  // Skills flattened
+  'skill-acrobatics'?: number;
+  'skill-animal-handling'?: number;
+  'skill-arcana'?: number;
+  'skill-athletics'?: number;
+  'skill-deception'?: number;
+  'skill-history'?: number;
+  'skill-insight'?: number;
+  'skill-intimidation'?: number;
+  'skill-investigation'?: number;
+  'skill-medicine'?: number;
+  'skill-nature'?: number;
+  'skill-perception'?: number;
+  'skill-performance'?: number;
+  'skill-persuasion'?: number;
+  'skill-religion'?: number;
+  'skill-sleight-of-hand'?: number;
+  'skill-stealth'?: number;
+  'skill-survival'?: number;
+  'damage-resistances': string[];
+  'damage-immunities': string[];
+  'condition-immunities': string[];
+  'damage-vulnerabilities': string[];
   senses: string[];
   languages: string[];
-  passivePerception: number;
-  traits: CreatureAbility[];
-  actions: CreatureAbility[];
-  bonusActions: CreatureAbility[];
-  reactions: CreatureAbility[];
-  legendaryActions: CreatureAbility[];
-  lairActions: CreatureAbility[];
-  mythicActions: CreatureAbility[];
+  'passive-perception': number;
+  abilities: CreatureAbility[];
 }
 
 export interface DungeonSummary {
@@ -158,11 +178,11 @@ export interface DungeonGraph {
 export interface RoomData {
   name: string;
   description?: string;
-  creatures?: CreatureData[];
-  items?: ItemData[];
-  containers?: ContainerData[];
-  traps?: TrapData[];
-  creatureGroups?: CreatureGroupData[];
+  creatures: CreatureData[];
+  items: ItemData[];
+  containers: ContainerData[];
+  traps: TrapData[];
+  'creature-groups': CreatureGroupData[];
 }
 
 // Discriminated union types matching backend sealed classes
@@ -174,8 +194,8 @@ export interface Monster {
   name: string;
   description?: string;
   level?: number;
-  hitPoints?: number;
-  armorClass?: number;
+  'hit-points'?: number;
+  'armor-class'?: number;
   alignment?: Alignment;
   statblock?: StatblockData;
 }
@@ -185,10 +205,10 @@ export interface NPC {
   name: string;
   description?: string;
   level?: number;
-  hitPoints?: number;
-  armorClass?: number;
+  'hit-points'?: number;
+  'armor-class'?: number;
   alignment?: Alignment;
-  isFriendly?: boolean;
+  'is-friendly'?: boolean;
   statblock?: StatblockData;
 }
 
@@ -197,8 +217,8 @@ export interface PC {
   name: string;
   description?: string;
   level?: number;
-  hitPoints?: number;
-  armorClass?: number;
+  'hit-points'?: number;
+  'armor-class'?: number;
   alignment?: Alignment;
 }
 
@@ -214,7 +234,7 @@ export interface MagicItem {
   type: 'magic-item';
   name: string;
   description?: string;
-  requiresAttunement?: boolean;
+  'requires-attunement'?: boolean;
   rarity?: Rarity;
 }
 
@@ -224,47 +244,47 @@ export interface BoxContainer {
   type: 'box-container';
   name: string;
   description?: string;
-  items?: ItemData[];
-  creatures?: CreatureData[];
-  containers?: ContainerData[];
-  traps?: TrapData[];
+  items: ItemData[];
+  creatures: CreatureData[];
+  containers: ContainerData[];
+  traps: TrapData[];
 }
 
 export interface TrapData {
   name: string;
   description?: string;
-  trapType?: TrapType;
-  saveDC?: number;
-  saveAbility?: SaveAbility;
-  damageDice?: string;
-  damageTypes: string[];
-  triggerDescription?: string;
-  disarmDC?: number;
+  'trap-type'?: TrapType;
+  'save-dc'?: number;
+  'save-ability'?: SaveAbility;
+  'damage-dice'?: string;
+  'damage-types': string[];
+  'trigger-description'?: string;
+  'disarm-dc'?: number;
 }
 
 export interface CreatureGroupData {
   name: string;
   description?: string;
-  quantityMin?: number;
-  quantityMax?: number;
-  quantityDice?: string;
-  templateCreature?: CreatureData;
+  'quantity-min'?: number;
+  'quantity-max'?: number;
+  'quantity-dice'?: string;
+  'template-creature'?: CreatureData;
 }
 
 export interface RandomEncounterTable {
   id: string;
   name: string;
   description?: string;
-  triggerCondition?: string;
+  'trigger-condition'?: string;
   encounters: EncounterEntryData[];
 }
 
 export interface EncounterEntryData {
-  encounterNumber: number;
+  'encounter-number': number;
   name: string;
   description?: string;
-  quantityMin?: number;
-  quantityMax?: number;
-  quantityDice?: string;
-  templateCreature?: CreatureData;
+  'quantity-min'?: number;
+  'quantity-max'?: number;
+  'quantity-dice'?: string;
+  'template-creature'?: CreatureData;
 }

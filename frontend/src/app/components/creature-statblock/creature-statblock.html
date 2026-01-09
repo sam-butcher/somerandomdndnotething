@@ -58,49 +58,49 @@
 
     <!-- Saves, Skills, etc. -->
     <div class="statblock-section">
-      @if (formatSavingThrows(statblock().savingThrows); as saves) {
+      @if (formatSavingThrows(); as saves) {
         <p><strong>Saving Throws</strong> {{ saves }}</p>
       }
-      @if (formatSkills(statblock().skills); as skills) {
+      @if (formatSkills(); as skills) {
         <p><strong>Skills</strong> {{ skills }}</p>
       }
-      @if (statblock().damageVulnerabilities && statblock().damageVulnerabilities.length > 0) {
-        <p><strong>Damage Vulnerabilities</strong> {{ statblock().damageVulnerabilities.join(', ') }}</p>
+      @if (statblock()['damage-vulnerabilities'] && statblock()['damage-vulnerabilities'].length > 0) {
+        <p><strong>Damage Vulnerabilities</strong> {{ statblock()['damage-vulnerabilities'].join(', ') }}</p>
       }
-      @if (statblock().damageResistances && statblock().damageResistances.length > 0) {
-        <p><strong>Damage Resistances</strong> {{ statblock().damageResistances.join(', ') }}</p>
+      @if (statblock()['damage-resistances'] && statblock()['damage-resistances'].length > 0) {
+        <p><strong>Damage Resistances</strong> {{ statblock()['damage-resistances'].join(', ') }}</p>
       }
-      @if (statblock().damageImmunities && statblock().damageImmunities.length > 0) {
-        <p><strong>Damage Immunities</strong> {{ statblock().damageImmunities.join(', ') }}</p>
+      @if (statblock()['damage-immunities'] && statblock()['damage-immunities'].length > 0) {
+        <p><strong>Damage Immunities</strong> {{ statblock()['damage-immunities'].join(', ') }}</p>
       }
-      @if (statblock().conditionImmunities && statblock().conditionImmunities.length > 0) {
-        <p><strong>Condition Immunities</strong> {{ statblock().conditionImmunities.join(', ') }}</p>
+      @if (statblock()['condition-immunities'] && statblock()['condition-immunities'].length > 0) {
+        <p><strong>Condition Immunities</strong> {{ statblock()['condition-immunities'].join(', ') }}</p>
       }
       @if (statblock().senses && statblock().senses.length > 0) {
-        <p><strong>Senses</strong> {{ statblock().senses.join(', ') }}, passive Perception {{ statblock().passivePerception }}</p>
+        <p><strong>Senses</strong> {{ statblock().senses.join(', ') }}, passive Perception {{ statblock()['passive-perception'] }}</p>
       } @else {
-        <p><strong>Senses</strong> passive Perception {{ statblock().passivePerception }}</p>
+        <p><strong>Senses</strong> passive Perception {{ statblock()['passive-perception'] }}</p>
       }
       @if (statblock().languages && statblock().languages.length > 0) {
         <p><strong>Languages</strong> {{ statblock().languages.join(', ') }}</p>
       } @else {
         <p><strong>Languages</strong> —</p>
       }
-      @if (statblock().challengeRating) {
-        <p><strong>Challenge</strong> {{ statblock().challengeRating }} @if (statblock().experiencePoints) {<span>({{ statblock().experiencePoints }} XP)</span>}</p>
+      @if (statblock()['challenge-rating']) {
+        <p><strong>Challenge</strong> {{ statblock()['challenge-rating'] }} @if (statblock()['experience-points']) {<span>({{ statblock()['experience-points'] }} XP)</span>}</p>
       }
-      <p><strong>Proficiency Bonus</strong> +{{ statblock().proficiencyBonus }}</p>
+      <p><strong>Proficiency Bonus</strong> +{{ statblock()['proficiency-bonus'] }}</p>
     </div>
 
     <!-- Divider -->
-    @if ((statblock().traits && statblock().traits.length > 0) || (statblock().actions && statblock().actions.length > 0) || (statblock().bonusActions && statblock().bonusActions.length > 0) || (statblock().reactions && statblock().reactions.length > 0) || (statblock().legendaryActions && statblock().legendaryActions.length > 0) || (statblock().lairActions && statblock().lairActions.length > 0) || (statblock().mythicActions && statblock().mythicActions.length > 0)) {
+    @if (traits().length > 0 || actions().length > 0 || bonusActions().length > 0 || reactions().length > 0 || legendaryActions().length > 0 || lairActions().length > 0 || mythicActions().length > 0) {
       <div class="statblock-divider"></div>
     }
 
     <!-- Traits -->
-    @if (statblock().traits && statblock().traits.length > 0) {
+    @if (traits().length > 0) {
       <div class="statblock-section">
-        @for (trait of statblock().traits; track trait.name) {
+        @for (trait of traits(); track trait.name) {
           <div class="ability-block">
             <p><strong><em>{{ trait.name }}.</em></strong> {{ trait.description }}</p>
           </div>
@@ -109,11 +109,11 @@
     }
 
     <!-- Actions -->
-    @if (statblock().actions && statblock().actions.length > 0) {
+    @if (actions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Actions</h4>
-        @for (action of statblock().actions; track action.name) {
+        @for (action of actions(); track action.name) {
           <div class="ability-block">
             <p><strong><em>{{ action.name }}.</em></strong> {{ action.description }}</p>
           </div>
@@ -122,11 +122,11 @@
     }
 
     <!-- Bonus Actions -->
-    @if (statblock().bonusActions && statblock().bonusActions.length > 0) {
+    @if (bonusActions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Bonus Actions</h4>
-        @for (bonusAction of statblock().bonusActions; track bonusAction.name) {
+        @for (bonusAction of bonusActions(); track bonusAction.name) {
           <div class="ability-block">
             <p><strong><em>{{ bonusAction.name }}.</em></strong> {{ bonusAction.description }}</p>
           </div>
@@ -135,11 +135,11 @@
     }
 
     <!-- Reactions -->
-    @if (statblock().reactions && statblock().reactions.length > 0) {
+    @if (reactions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Reactions</h4>
-        @for (reaction of statblock().reactions; track reaction.name) {
+        @for (reaction of reactions(); track reaction.name) {
           <div class="ability-block">
             <p><strong><em>{{ reaction.name }}.</em></strong> {{ reaction.description }}</p>
           </div>
@@ -148,15 +148,15 @@
     }
 
     <!-- Legendary Actions -->
-    @if (statblock().legendaryActions && statblock().legendaryActions.length > 0) {
+    @if (legendaryActions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Legendary Actions</h4>
         <p class="legendary-desc">{{ creatureName() }} can take 3 legendary actions, choosing from the options below. Only one legendary action can be used at a time and only at the end of another creature's turn. {{ creatureName() }} regains spent legendary actions at the start of its turn.</p>
-        @for (legendaryAction of statblock().legendaryActions; track legendaryAction.name) {
+        @for (legendaryAction of legendaryActions(); track legendaryAction.name) {
           <div class="ability-block">
             <p>
-              <strong><em>{{ legendaryAction.name }}@if (legendaryAction.actionCost && legendaryAction.actionCost > 1) {<span> (Costs {{ legendaryAction.actionCost }} Actions)</span>}</em></strong> {{ legendaryAction.description }}
+              <strong><em>{{ legendaryAction.name }}@if (legendaryAction['action-cost'] && legendaryAction['action-cost'] > 1) {<span> (Costs {{ legendaryAction['action-cost'] }} Actions)</span>}</em></strong> {{ legendaryAction.description }}
             </p>
           </div>
         }
@@ -164,11 +164,11 @@
     }
 
     <!-- Lair Actions -->
-    @if (statblock().lairActions && statblock().lairActions.length > 0) {
+    @if (lairActions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Lair Actions</h4>
-        @for (lairAction of statblock().lairActions; track lairAction.name) {
+        @for (lairAction of lairActions(); track lairAction.name) {
           <div class="ability-block">
             <p><strong><em>{{ lairAction.name }}.</em></strong> {{ lairAction.description }}</p>
           </div>
@@ -177,11 +177,11 @@
     }
 
     <!-- Mythic Actions -->
-    @if (statblock().mythicActions && statblock().mythicActions.length > 0) {
+    @if (mythicActions().length > 0) {
       <div class="statblock-divider"></div>
       <div class="statblock-section">
         <h4 class="section-heading">Mythic Actions</h4>
-        @for (mythicAction of statblock().mythicActions; track mythicAction.name) {
+        @for (mythicAction of mythicActions(); track mythicAction.name) {
           <div class="ability-block">
             <p><strong><em>{{ mythicAction.name }}.</em></strong> {{ mythicAction.description }}</p>
           </div>

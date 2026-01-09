@@ -116,11 +116,11 @@ export class DungeonViewer implements OnInit {
   private filterRoom(room: RoomData, roomIndex: number, searchLower: string): RoomData {
     return {
       ...room,
-      creatures: room.creatures ? (room.creatures || []).filter(c => this.filterCreature(c, searchLower)) : undefined,
-      items: room.items ? (room.items || []).filter(i => this.filterItem(i, searchLower)) : undefined,
-      containers: room.containers ? (room.containers || []).map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower)) : undefined,
+      creatures: room.creatures.filter(c => this.filterCreature(c, searchLower)),
+      items: room.items.filter(i => this.filterItem(i, searchLower)),
+      containers: room.containers.map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower)),
       traps: room.traps,
-      creatureGroups: room.creatureGroups
+      'creature-groups': room['creature-groups']
     };
   }
 
@@ -154,9 +154,9 @@ export class DungeonViewer implements OnInit {
   private filterContainer(container: ContainerData, id: string, searchLower: string): ContainerData {
     return {
       ...container,
-      creatures: container.creatures ? (container.creatures || []).filter(c => this.filterCreature(c, searchLower)) : undefined,
-      items: container.items ? (container.items || []).filter(i => this.filterItem(i, searchLower)) : undefined,
-      containers: container.containers ? (container.containers || []).map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower)) : undefined,
+      creatures: container.creatures.filter(c => this.filterCreature(c, searchLower)),
+      items: container.items.filter(i => this.filterItem(i, searchLower)),
+      containers: container.containers.map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower)),
       traps: container.traps
     };
   }

@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatblockData, Alignment } from '../../models/dungeon.models';
 
@@ -18,6 +18,35 @@ export class CreatureStatblock {
 
   // Collapse state
   protected readonly isCollapsed = signal(true);
+
+  // Computed ability getters - filter abilities by type
+  readonly traits = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'trait')
+  );
+
+  readonly actions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'action')
+  );
+
+  readonly bonusActions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'bonus-action')
+  );
+
+  readonly reactions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'reaction')
+  );
+
+  readonly legendaryActions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'legendary-action')
+  );
+
+  readonly lairActions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'lair-action')
+  );
+
+  readonly mythicActions = computed(() =>
+    this.statblock().abilities.filter(a => a['ability-type'] === 'mythic-action')
+  );
 
   // Toggle collapse state
   toggleCollapse(): void {
@@ -42,40 +71,40 @@ export class CreatureStatblock {
   }
 
   // Format saving throws for display
-  formatSavingThrows(saves: StatblockData['savingThrows']): string | null {
-    if (!saves) return null;
+  formatSavingThrows(): string | null {
+    const stat = this.statblock();
     const parts: string[] = [];
-    if (saves.strength !== null && saves.strength !== undefined) parts.push(`Str ${this.formatBonus(saves.strength)}`);
-    if (saves.dexterity !== null && saves.dexterity !== undefined) parts.push(`Dex ${this.formatBonus(saves.dexterity)}`);
-    if (saves.constitution !== null && saves.constitution !== undefined) parts.push(`Con ${this.formatBonus(saves.constitution)}`);
-    if (saves.intelligence !== null && saves.intelligence !== undefined) parts.push(`Int ${this.formatBonus(saves.intelligence)}`);
-    if (saves.wisdom !== null && saves.wisdom !== undefined) parts.push(`Wis ${this.formatBonus(saves.wisdom)}`);
-    if (saves.charisma !== null && saves.charisma !== undefined) parts.push(`Cha ${this.formatBonus(saves.charisma)}`);
+    if (stat['save-strength'] !== null && stat['save-strength'] !== undefined) parts.push(`Str ${this.formatBonus(stat['save-strength'])}`);
+    if (stat['save-dexterity'] !== null && stat['save-dexterity'] !== undefined) parts.push(`Dex ${this.formatBonus(stat['save-dexterity'])}`);
+    if (stat['save-constitution'] !== null && stat['save-constitution'] !== undefined) parts.push(`Con ${this.formatBonus(stat['save-constitution'])}`);
+    if (stat['save-intelligence'] !== null && stat['save-intelligence'] !== undefined) parts.push(`Int ${this.formatBonus(stat['save-intelligence'])}`);
+    if (stat['save-wisdom'] !== null && stat['save-wisdom'] !== undefined) parts.push(`Wis ${this.formatBonus(stat['save-wisdom'])}`);
+    if (stat['save-charisma'] !== null && stat['save-charisma'] !== undefined) parts.push(`Cha ${this.formatBonus(stat['save-charisma'])}`);
     return parts.length > 0 ? parts.join(', ') : null;
   }
 
   // Format skills for display
-  formatSkills(skills: StatblockData['skills']): string | null {
-    if (!skills) return null;
+  formatSkills(): string | null {
+    const stat = this.statblock();
     const parts: string[] = [];
-    if (skills.acrobatics !== null && skills.acrobatics !== undefined) parts.push(`Acrobatics ${this.formatBonus(skills.acrobatics)}`);
-    if (skills.animalHandling !== null && skills.animalHandling !== undefined) parts.push(`Animal Handling ${this.formatBonus(skills.animalHandling)}`);
-    if (skills.arcana !== null && skills.arcana !== undefined) parts.push(`Arcana ${this.formatBonus(skills.arcana)}`);
-    if (skills.athletics !== null && skills.athletics !== undefined) parts.push(`Athletics ${this.formatBonus(skills.athletics)}`);
-    if (skills.deception !== null && skills.deception !== undefined) parts.push(`Deception ${this.formatBonus(skills.deception)}`);
-    if (skills.history !== null && skills.history !== undefined) parts.push(`History ${this.formatBonus(skills.history)}`);
-    if (skills.insight !== null && skills.insight !== undefined) parts.push(`Insight ${this.formatBonus(skills.insight)}`);
-    if (skills.intimidation !== null && skills.intimidation !== undefined) parts.push(`Intimidation ${this.formatBonus(skills.intimidation)}`);
-    if (skills.investigation !== null && skills.investigation !== undefined) parts.push(`Investigation ${this.formatBonus(skills.investigation)}`);
-    if (skills.medicine !== null && skills.medicine !== undefined) parts.push(`Medicine ${this.formatBonus(skills.medicine)}`);
-    if (skills.nature !== null && skills.nature !== undefined) parts.push(`Nature ${this.formatBonus(skills.nature)}`);
-    if (skills.perception !== null && skills.perception !== undefined) parts.push(`Perception ${this.formatBonus(skills.perception)}`);
-    if (skills.performance !== null && skills.performance !== undefined) parts.push(`Performance ${this.formatBonus(skills.performance)}`);
-    if (skills.persuasion !== null && skills.persuasion !== undefined) parts.push(`Persuasion ${this.formatBonus(skills.persuasion)}`);
-    if (skills.religion !== null && skills.religion !== undefined) parts.push(`Religion ${this.formatBonus(skills.religion)}`);
-    if (skills.sleightOfHand !== null && skills.sleightOfHand !== undefined) parts.push(`Sleight of Hand ${this.formatBonus(skills.sleightOfHand)}`);
-    if (skills.stealth !== null && skills.stealth !== undefined) parts.push(`Stealth ${this.formatBonus(skills.stealth)}`);
-    if (skills.survival !== null && skills.survival !== undefined) parts.push(`Survival ${this.formatBonus(skills.survival)}`);
+    if (stat['skill-acrobatics'] !== null && stat['skill-acrobatics'] !== undefined) parts.push(`Acrobatics ${this.formatBonus(stat['skill-acrobatics'])}`);
+    if (stat['skill-animal-handling'] !== null && stat['skill-animal-handling'] !== undefined) parts.push(`Animal Handling ${this.formatBonus(stat['skill-animal-handling'])}`);
+    if (stat['skill-arcana'] !== null && stat['skill-arcana'] !== undefined) parts.push(`Arcana ${this.formatBonus(stat['skill-arcana'])}`);
+    if (stat['skill-athletics'] !== null && stat['skill-athletics'] !== undefined) parts.push(`Athletics ${this.formatBonus(stat['skill-athletics'])}`);
+    if (stat['skill-deception'] !== null && stat['skill-deception'] !== undefined) parts.push(`Deception ${this.formatBonus(stat['skill-deception'])}`);
+    if (stat['skill-history'] !== null && stat['skill-history'] !== undefined) parts.push(`History ${this.formatBonus(stat['skill-history'])}`);
+    if (stat['skill-insight'] !== null && stat['skill-insight'] !== undefined) parts.push(`Insight ${this.formatBonus(stat['skill-insight'])}`);
+    if (stat['skill-intimidation'] !== null && stat['skill-intimidation'] !== undefined) parts.push(`Intimidation ${this.formatBonus(stat['skill-intimidation'])}`);
+    if (stat['skill-investigation'] !== null && stat['skill-investigation'] !== undefined) parts.push(`Investigation ${this.formatBonus(stat['skill-investigation'])}`);
+    if (stat['skill-medicine'] !== null && stat['skill-medicine'] !== undefined) parts.push(`Medicine ${this.formatBonus(stat['skill-medicine'])}`);
+    if (stat['skill-nature'] !== null && stat['skill-nature'] !== undefined) parts.push(`Nature ${this.formatBonus(stat['skill-nature'])}`);
+    if (stat['skill-perception'] !== null && stat['skill-perception'] !== undefined) parts.push(`Perception ${this.formatBonus(stat['skill-perception'])}`);
+    if (stat['skill-performance'] !== null && stat['skill-performance'] !== undefined) parts.push(`Performance ${this.formatBonus(stat['skill-performance'])}`);
+    if (stat['skill-persuasion'] !== null && stat['skill-persuasion'] !== undefined) parts.push(`Persuasion ${this.formatBonus(stat['skill-persuasion'])}`);
+    if (stat['skill-religion'] !== null && stat['skill-religion'] !== undefined) parts.push(`Religion ${this.formatBonus(stat['skill-religion'])}`);
+    if (stat['skill-sleight-of-hand'] !== null && stat['skill-sleight-of-hand'] !== undefined) parts.push(`Sleight of Hand ${this.formatBonus(stat['skill-sleight-of-hand'])}`);
+    if (stat['skill-stealth'] !== null && stat['skill-stealth'] !== undefined) parts.push(`Stealth ${this.formatBonus(stat['skill-stealth'])}`);
+    if (stat['skill-survival'] !== null && stat['skill-survival'] !== undefined) parts.push(`Survival ${this.formatBonus(stat['skill-survival'])}`);
     return parts.length > 0 ? parts.join(', ') : null;
   }
 
