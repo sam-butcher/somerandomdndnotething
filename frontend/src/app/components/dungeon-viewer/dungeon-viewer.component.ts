@@ -235,4 +235,12 @@ export class DungeonViewer implements OnInit {
     if (connection['is-one-way']) classes.push('connection-oneway');
     return classes.join(' ');
   }
+
+  getOutgoingConnections(room: RoomData) {
+    return room.connections.filter(c => c.direction === 'outgoing');
+  }
+
+  getIncomingConnections(room: RoomData) {
+    return room.connections.filter(c => c.direction === 'incoming');
+  }
 }

@@ -332,42 +332,81 @@
 
                 <!-- Connections -->
                 @if (room.connections && room.connections.length > 0) {
-                  <div class="content-section">
-                    <h4 class="section-title">Connections</h4>
-                    <div class="connections-list">
-                      @for (connection of room.connections; track connection.targetRoomId) {
-                        <div
-                          class="connection-item"
-                          [class]="getConnectionClass(connection)"
-                          (click)="navigateToRoom(connection.targetRoomIndex)"
-                          [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
-                        >
-                          <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
-                          <div class="connection-details">
-                            <div class="connection-header">
-                              <strong class="connection-target">{{ connection.targetRoomName }}</strong>
-                              <span class="connection-type-label">{{ connection['connection-type'] }}</span>
-                              @if (connection['is-locked']) {
-                                <span class="connection-badge locked-badge">Locked</span>
-                              }
-                              @if (connection['is-secret']) {
-                                <span class="connection-badge secret-badge">Secret</span>
-                              }
-                              @if (connection['is-one-way'] && connection.direction === 'outgoing') {
-                                <span class="connection-badge oneway-badge">One-way</span>
-                              }
-                              @if (connection.direction === 'incoming') {
-                                <span class="connection-direction">← From</span>
+                  <!-- Outgoing Connections -->
+                  @let outgoingConnections = getOutgoingConnections(room);
+                  @if (outgoingConnections.length > 0) {
+                    <div class="content-section">
+                      <h4 class="section-title">Exits</h4>
+                      <div class="connections-list">
+                        @for (connection of outgoingConnections; track connection.targetRoomId) {
+                          <div
+                            class="connection-item"
+                            [class]="getConnectionClass(connection)"
+                            (click)="navigateToRoom(connection.targetRoomIndex)"
+                            [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
+                          >
+                            <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
+                            <div class="connection-details">
+                              <div class="connection-header">
+                                <strong class="connection-target">{{ connection.targetRoomName }}</strong>
+                                <span class="connection-type-label">{{ connection['connection-type'] }}</span>
+                                @if (connection['is-locked']) {
+                                  <span class="connection-badge locked-badge">Locked</span>
+                                }
+                                @if (connection['is-secret']) {
+                                  <span class="connection-badge secret-badge">Secret</span>
+                                }
+                                @if (connection['is-one-way']) {
+                                  <span class="connection-badge oneway-badge">One-way</span>
+                                }
+                              </div>
+                              @if (connection.description) {
+                                <p class="connection-description">{{ connection.description }}</p>
                               }
                             </div>
-                            @if (connection.description) {
-                              <p class="connection-description">{{ connection.description }}</p>
-                            }
                           </div>
-                        </div>
-                      }
+                        }
+                      </div>
                     </div>
-                  </div>
+                  }
+
+                  <hr/>
+
+                  <!-- Incoming Connections -->
+                  @let incomingConnections = getIncomingConnections(room);
+                  @if (incomingConnections.length > 0) {
+                    <div class="content-section">
+                      <h4 class="section-title">Entrances From</h4>
+                      <div class="connections-list">
+                        @for (connection of incomingConnections; track connection.targetRoomId) {
+                          <div
+                            class="connection-item connection-incoming"
+                            [class]="getConnectionClass(connection)"
+                            (click)="navigateToRoom(connection.targetRoomIndex)"
+                            [style.cursor]="connection.targetRoomIndex !== undefined ? 'pointer' : 'default'"
+                          >
+                            <span class="connection-icon">{{ getConnectionIcon(connection) }}</span>
+                            <div class="connection-details">
+                              <div class="connection-header">
+                                <span class="connection-direction">← From</span>
+                                <strong class="connection-target">{{ connection.targetRoomName }}</strong>
+                                <span class="connection-type-label">{{ connection['connection-type'] }}</span>
+                                @if (connection['is-locked']) {
+                                  <span class="connection-badge locked-badge">Locked</span>
+                                }
+                                @if (connection['is-secret']) {
+                                  <span class="connection-badge secret-badge">Secret</span>
+                                }
+                              </div>
+                              @if (connection.description) {
+                                <p class="connection-description">{{ connection.description }}</p>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
                 }
               </div>
             }

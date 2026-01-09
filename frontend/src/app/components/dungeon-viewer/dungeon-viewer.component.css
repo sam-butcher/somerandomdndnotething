@@ -423,3 +423,13 @@
 .connection-locked {
   border-left-color: #c62828;
 }
+
+/* Incoming connections have a more subtle appearance */
+.connection-incoming {
+  background: rgba(0, 0, 0, 0.02);
+  opacity: 0.85;
+}
+
+.connection-incoming:hover {
+  opacity: 1;
+}
