@@ -153,17 +153,9 @@ export class TypeDBQueryService {
       }
 
       const result: any = response.answers[0];
-      const dungeon = {
-        id: result.dungeon.id as string,
-        name: result.dungeon.name as string,
-        description: result.dungeon.description as string | undefined,
-      };
+      const dungeon = result.dungeon;
 
-      const rooms = (result.rooms || []).map((r: any) => ({
-        id: r.id as string,
-        name: r.name as string,
-        description: r.description as string | undefined,
-      }));
+      const rooms = result.rooms || [];
 
       const containmentEdges: ContainmentEdge[] = [];
       const entityDetails = new Map<string, EntityAttributes>();
@@ -184,9 +176,7 @@ export class TypeDBQueryService {
           ...c.attributes,
           entityType,
           abilities: (c.abilities || []).map((a: any) => ({
-            name: a.ability.name,
-            description: a.ability.description,
-            'action-cost': a.ability['action-cost'],
+            ...a.ability,
             'ability-type': a.type.label,
           })),
         });
@@ -213,9 +203,7 @@ export class TypeDBQueryService {
               ...templateData.attributes,
               entityType: creatureType,
               abilities: abilities.map((a: any) => ({
-                name: a.ability.name,
-                description: a.ability.description,
-                'action-cost': a.ability['action-cost'],
+                ...a.ability,
                 'ability-type': a.type.label,
               })),
             };
@@ -224,21 +212,13 @@ export class TypeDBQueryService {
           }
 
           entries.push({
-            'encounter-number': entryData['encounter-number'] as number,
-            name: entryData['name'] as string,
-            description: entryData['description'] as string | undefined,
-            'quantity-min': entryData['quantity-min'] as number | undefined,
-            'quantity-max': entryData['quantity-max'] as number | undefined,
-            'quantity-dice': entryData['quantity-dice'] as string | undefined,
+            ...entryData,
             'template-creature': templateCreature,
           });
         }
 
         randomEncounters.push({
-          id: tableData['id'] as string,
-          name: tableData['name'] as string,
-          description: tableData['description'] as string | undefined,
-          'trigger-condition': tableData['trigger-condition'] as string | undefined,
+          ...tableData,
           encounters: entries,
         });
       }
@@ -272,9 +252,7 @@ export class TypeDBQueryService {
     );
 
     return {
-      id: structure.dungeon.id,
-      name: structure.dungeon.name,
-      description: structure.dungeon.description,
+      ...structure.dungeon,
       rooms,
       randomEncounters: structure.randomEncounters.length > 0 ? structure.randomEncounters : undefined,
     };
@@ -375,9 +353,9 @@ export class TypeDBQueryService {
     }
 
     return {
+      ...containerData,
       type: 'box-container',
       name: containerData['name'] as string,
-      description: containerData['description'] as string | undefined,
       creatures,
       items,
       containers,
@@ -449,22 +427,22 @@ export class TypeDBQueryService {
     return {
       ...entity,
       abilityScores: {
-        strength: entity['strength'] as number,
-        dexterity: entity['dexterity'] as number,
-        constitution: entity['constitution'] as number,
-        intelligence: entity['intelligence'] as number,
-        wisdom: wisdom,
-        charisma: entity['charisma'] as number,
+        strength: entity['strength'],
+        dexterity: entity['dexterity'],
+        constitution: entity['constitution'],
+        intelligence: entity['intelligence'],
+        wisdom: entity['wisdom'],
+        charisma: entity['charisma'],
       },
-      size: entity['size'] as CreatureSize,
-      type: entity['creature-type'] as CreatureType,
+      size: entity['size'],
+      type: entity['creature-type'],
       'proficiency-bonus': entity['proficiency-bonus'] || 2,
       speed: {
-        walk: entity['speed-walk'] as number | undefined,
-        fly: entity['speed-fly'] as number | undefined,
-        swim: entity['speed-swim'] as number | undefined,
-        burrow: entity['speed-burrow'] as number | undefined,
-        climb: entity['speed-climb'] as number | undefined,
+        walk: entity['speed-walk'],
+        fly: entity['speed-fly'],
+        swim: entity['speed-swim'],
+        burrow: entity['speed-burrow'],
+        climb: entity['speed-climb'],
       },
       'damage-resistances': parseListAttribute('damage-resistance'),
       'damage-immunities': parseListAttribute('damage-immunity'),
@@ -473,7 +451,7 @@ export class TypeDBQueryService {
       senses: parseListAttribute('sense'),
       languages: parseListAttribute('language'),
       'passive-perception': passivePerception,
-      abilities: (entity['abilities'] || []) as CreatureAbility[],
+      abilities: entity['abilities'] || [],
     } as StatblockData;
   }
 
