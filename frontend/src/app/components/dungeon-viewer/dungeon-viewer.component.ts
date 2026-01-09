@@ -144,11 +144,7 @@ export class DungeonViewer implements OnInit {
     if (item.type === 'magic-item' && !this.filterMagicItem()) return false;
 
     // Check search text
-    if (searchLower && !item.name.toLowerCase().includes(searchLower)) {
-      return false;
-    }
-
-    return true;
+    return !(searchLower && !item.name.toLowerCase().includes(searchLower));
   }
 
   private filterContainer(container: ContainerData, id: string, searchLower: string): ContainerData {

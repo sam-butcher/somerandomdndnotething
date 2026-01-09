@@ -172,7 +172,7 @@ export interface DungeonGraph {
   name: string;
   description?: string;
   rooms: RoomData[];
-  randomEncounters?: RandomEncounterTable[];
+  randomEncounters: RandomEncounterTable[];
 }
 
 export interface RoomData {

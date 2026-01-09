@@ -29,7 +29,6 @@ import { QueryResponse } from '@typedb/driver-http';
 
 interface ContainmentEdge {
   containerId: string;
-  containedId: string;
   containedType: string;
   entityData: EntityAttributes;
 }
@@ -97,7 +96,6 @@ export class TypeDBQueryService {
             $contained isa! $contained_type;
           fetch {
             "containerId": $parent.id,
-            "containedId": $contained.id,
             "type": $contained_type,
             "attributes": { $contained.* },
             "abilities": [
@@ -160,7 +158,6 @@ export class TypeDBQueryService {
       const containmentEdges: ContainmentEdge[] = [];
 
       for (const c of result.containment || []) {
-        const containedId = c.containedId as string;
         const entityType = c.type.label as string;
 
         // Build entity data with abilities
@@ -176,7 +173,6 @@ export class TypeDBQueryService {
         // Add containment edge with inline entity data
         containmentEdges.push({
           containerId: c.containerId as string,
-          containedId,
           containedType: entityType,
           entityData,
         });
@@ -211,10 +207,7 @@ export class TypeDBQueryService {
             templateCreature = this.parseCreatureFromEntity(entityData, creatureType) || undefined;
           }
 
-          entries.push({
-            ...entryData,
-            'template-creature': templateCreature,
-          });
+          entries.push({...entryData, 'template-creature': templateCreature});
         }
 
         randomEncounters.push({
@@ -236,28 +229,15 @@ export class TypeDBQueryService {
     containmentEdges: ContainmentEdge[];
     randomEncounters: RandomEncounterTable[];
   }): DungeonGraph {
-    // Build containment map: container ID -> set of contained entity IDs
-    const containmentMap = new Map<string, Set<string>>();
-    // Build entity data map: entity ID -> entity data
-    const entityDataMap = new Map<string, EntityAttributes>();
-
-    for (const edge of structure.containmentEdges) {
-      if (!containmentMap.has(edge.containerId)) {
-        containmentMap.set(edge.containerId, new Set());
-      }
-      containmentMap.get(edge.containerId)!.add(edge.containedId);
-      entityDataMap.set(edge.containedId, edge.entityData);
-    }
-
     // Build rooms with their contents
     const rooms: RoomData[] = structure.rooms.map((roomData) =>
-      this.buildRoom(roomData.id, roomData.name, roomData.description, containmentMap, entityDataMap)
+      this.buildRoom(roomData.id, roomData.name, roomData.description, structure.containmentEdges)
     );
 
     return {
       ...structure.dungeon,
       rooms,
-      randomEncounters: structure.randomEncounters.length > 0 ? structure.randomEncounters : undefined,
+      randomEncounters: structure.randomEncounters,
     };
   }
 
@@ -265,10 +245,9 @@ export class TypeDBQueryService {
     roomId: string,
     roomName: string,
     roomDescription: string | undefined,
-    containmentMap: Map<string, Set<string>>,
-    entityDataMap: Map<string, EntityAttributes>
+    containmentEdges: ContainmentEdge[],
   ): RoomData {
-    const contained = containmentMap.get(roomId) || new Set<string>();
+    const roomEdges = containmentEdges.filter(x => x.containerId === roomId);
 
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
@@ -276,25 +255,17 @@ export class TypeDBQueryService {
     const traps: TrapData[] = [];
     const creatureGroups: CreatureGroupData[] = [];
 
-    for (const entityId of contained) {
-      const entityData = entityDataMap.get(entityId);
-      if (!entityData) continue;
-
+    for (const edge of roomEdges) {
+      const entityData = edge.entityData;
       const entityType = entityData['entityType'];
 
       if (entityType === 'monster' || entityType === 'npc' || entityType === 'pc') {
         const creature = this.parseCreatureFromEntity(entityData, entityType);
         if (creature) creatures.push(creature);
       } else if (entityType === 'item' || entityType === 'magic-item') {
-        const item = this.parseItemFromEntity(entityData, entityType);
-        if (item) items.push(item);
+        items.push(this.parseItemFromEntity(entityData, entityType));
       } else if (entityType === 'box-container') {
-        const container = this.buildContainer(
-          entityId,
-          entityData,
-          containmentMap,
-          entityDataMap
-        );
+        const container = this.buildContainer(entityData, containmentEdges);
         if (container) containers.push(container);
       } else if (entityType === 'trap') {
         const trap = this.parseTrapFromEntity(entityData);
@@ -316,22 +287,19 @@ export class TypeDBQueryService {
   }
 
   private buildContainer(
-    containerId: string,
     containerData: EntityAttributes,
-    containmentMap: Map<string, Set<string>>,
-    entityDataMap: Map<string, EntityAttributes>
-  ): ContainerData | null {
-    const contained = containmentMap.get(containerId) || new Set<string>();
+    containmentEdges: ContainmentEdge[],
+  ): ContainerData {
+    const containerId = containerData["id"];
+    const containerEdges = containmentEdges.filter(x => x.containerId === containerId);
 
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
     const traps: TrapData[] = [];
 
-    for (const entityId of contained) {
-      const entityData = entityDataMap.get(entityId);
-      if (!entityData) continue;
-
+    for (const edge of containerEdges) {
+      const entityData = edge.entityData;
       const entityType = entityData['entityType'];
 
       if (entityType === 'monster' || entityType === 'npc' || entityType === 'pc') {
@@ -341,12 +309,7 @@ export class TypeDBQueryService {
         const item = this.parseItemFromEntity(entityData, entityType);
         if (item) items.push(item);
       } else if (entityType === 'box-container') {
-        const nestedContainer = this.buildContainer(
-          entityId,
-          entityData,
-          containmentMap,
-          entityDataMap
-        );
+        const nestedContainer = this.buildContainer(entityData, containmentEdges);
         if (nestedContainer) containers.push(nestedContainer);
       } else if (entityType === 'trap') {
         const trap = this.parseTrapFromEntity(entityData);
@@ -393,18 +356,12 @@ export class TypeDBQueryService {
     return null;
   }
 
-  private parseItemFromEntity(entity: EntityAttributes, entityType: string): ItemData | null {
-    if (entityType === 'magic-item') {
-      return {
-        type: 'magic-item',
-        ...entity,
-      } as MagicItem;
-    } else {
-      return {
-        type: 'item',
-        ...entity,
-      } as RegularItem;
-    }
+  private parseItemFromEntity(entity: EntityAttributes, entityType: "item" | "magic-item"): ItemData {
+    return {
+      type: entityType,
+      name: entity["name"],
+      ...entity
+    };
   }
 
   private buildStatblock(entity: EntityAttributes): StatblockData | null {
