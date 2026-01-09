@@ -12,7 +12,12 @@ import {
   ItemData,
   ContainerData,
   Rarity,
-  Alignment
+  Alignment,
+  TrapData,
+  TrapType,
+  SaveAbility,
+  CreatureGroupData,
+  RandomEncounterTable
 } from '../../models/dungeon.models';
 
 @Component({
@@ -108,23 +113,14 @@ export class DungeonViewer implements OnInit {
     return this.expandedRooms().has(index);
   }
 
-  toggleContainer(id: string): void {
-    const expanded = this.expandedContainers();
-    const newExpanded = new Map(expanded);
-    newExpanded.set(id, !newExpanded.get(id));
-    this.expandedContainers.set(newExpanded);
-  }
-
-  isContainerExpanded(id: string): boolean {
-    return this.expandedContainers().get(id) ?? false;
-  }
-
   private filterRoom(room: RoomData, roomIndex: number, searchLower: string): RoomData {
     return {
       ...room,
-      creatures: (room.creatures || []).filter(c => this.filterCreature(c, searchLower)),
-      items: (room.items || []).filter(i => this.filterItem(i, searchLower)),
-      containers: (room.containers || []).map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower))
+      creatures: room.creatures ? (room.creatures || []).filter(c => this.filterCreature(c, searchLower)) : undefined,
+      items: room.items ? (room.items || []).filter(i => this.filterItem(i, searchLower)) : undefined,
+      containers: room.containers ? (room.containers || []).map((c, idx) => this.filterContainer(c, `${roomIndex}-${idx}`, searchLower)) : undefined,
+      traps: room.traps,
+      creatureGroups: room.creatureGroups
     };
   }
 
@@ -158,9 +154,10 @@ export class DungeonViewer implements OnInit {
   private filterContainer(container: ContainerData, id: string, searchLower: string): ContainerData {
     return {
       ...container,
-      creatures: (container.creatures || []).filter(c => this.filterCreature(c, searchLower)),
-      items: (container.items || []).filter(i => this.filterItem(i, searchLower)),
-      containers: (container.containers || []).map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower))
+      creatures: container.creatures ? (container.creatures || []).filter(c => this.filterCreature(c, searchLower)) : undefined,
+      items: container.items ? (container.items || []).filter(i => this.filterItem(i, searchLower)) : undefined,
+      containers: container.containers ? (container.containers || []).map((c, idx) => this.filterContainer(c, `${id}-${idx}`, searchLower)) : undefined,
+      traps: container.traps
     };
   }
 
@@ -194,5 +191,15 @@ export class DungeonViewer implements OnInit {
     if (alignment.includes('Evil')) return 'alignment-evil';
     if (alignment === Alignment.UNALIGNED) return 'alignment-unaligned';
     return 'alignment-neutral';
+  }
+
+  getTrapTypeClass(trapType?: TrapType): string {
+    if (!trapType) return '';
+    switch (trapType) {
+      case TrapType.MECHANICAL: return 'trap-mechanical';
+      case TrapType.MAGICAL: return 'trap-magical';
+      case TrapType.HYBRID: return 'trap-hybrid';
+      default: return '';
+    }
   }
 }

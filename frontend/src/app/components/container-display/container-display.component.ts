@@ -6,7 +6,10 @@ import {
   CreatureData,
   ItemData,
   Rarity,
-  Alignment
+  Alignment,
+  TrapData,
+  TrapType,
+  SaveAbility
 } from '../../models/dungeon.models';
 
 @Component({
@@ -58,5 +61,15 @@ export class ContainerDisplay {
     if (alignment.includes('Evil')) return 'alignment-evil';
     if (alignment === Alignment.UNALIGNED) return 'alignment-unaligned';
     return 'alignment-neutral';
+  }
+
+  getTrapTypeClass(trapType?: TrapType): string {
+    if (!trapType) return '';
+    switch (trapType) {
+      case TrapType.MECHANICAL: return 'trap-mechanical';
+      case TrapType.MAGICAL: return 'trap-magical';
+      case TrapType.HYBRID: return 'trap-hybrid';
+      default: return '';
+    }
   }
 }

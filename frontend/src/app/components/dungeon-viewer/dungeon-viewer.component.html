@@ -88,6 +88,59 @@
         </div>
       </div>
 
+      <!-- Random Encounters -->
+      @if (dung.randomEncounters && dung.randomEncounters.length > 0) {
+        <div class="random-encounters-panel parchment-panel">
+          <h3 class="section-title">Random Encounters</h3>
+          @for (encounterTable of dung.randomEncounters; track encounterTable.id) {
+            <div class="encounter-table">
+              <h4 class="encounter-table-name">{{ encounterTable.name }}</h4>
+              @if (encounterTable.description) {
+                <p class="encounter-table-description">{{ encounterTable.description }}</p>
+              }
+              @if (encounterTable.triggerCondition) {
+                <p class="encounter-trigger"><strong>Trigger:</strong> {{ encounterTable.triggerCondition }}</p>
+              }
+              <div class="encounters-list">
+                @for (encounter of encounterTable.encounters; track encounter.encounterNumber) {
+                  <div class="encounter-entry">
+                    <div class="encounter-header">
+                      <span class="encounter-number">{{ encounter.encounterNumber }}:</span>
+                      <strong class="encounter-name">{{ encounter.name }}</strong>
+                      @if (encounter.quantityDice) {
+                        <span class="encounter-quantity">({{ encounter.quantityDice }})</span>
+                      } @else if (encounter.quantityMin && encounter.quantityMax) {
+                        <span class="encounter-quantity">({{ encounter.quantityMin }}-{{ encounter.quantityMax }})</span>
+                      }
+                    </div>
+                    @if (encounter.description) {
+                      <p class="encounter-description">{{ encounter.description }}</p>
+                    }
+                    @if (encounter.templateCreature) {
+                      <div class="template-creature">
+                        <span class="template-label">Template:</span>
+                        <strong>{{ encounter.templateCreature.name }}</strong>
+                        @if (encounter.templateCreature.type === 'monster' || encounter.templateCreature.type === 'npc') {
+                          @if (encounter.templateCreature.statblock) {
+                            <app-creature-statblock
+                              [statblock]="encounter.templateCreature.statblock"
+                              [creatureName]="encounter.templateCreature.name"
+                              [hitPoints]="encounter.templateCreature.hitPoints"
+                              [armorClass]="encounter.templateCreature.armorClass"
+                              [alignment]="encounter.templateCreature.alignment"
+                            />
+                          }
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Rooms List -->
       <div class="rooms-list">
         @for (room of dung.rooms; track $index) {
@@ -176,6 +229,83 @@
                                 }
                                 @if (item.requiresAttunement) {
                                   <span class="stat attunement">Requires Attunement</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Traps -->
+                @if (room.traps && room.traps.length > 0) {
+                  <div class="content-section">
+                    <h4 class="section-title">Traps</h4>
+                    <div class="traps-list">
+                      @for (trap of room.traps; track trap.name) {
+                        <div class="trap-item">
+                          <div class="trap-details">
+                            <strong class="trap-name">{{ trap.name }}</strong>
+                            @if (trap.description) {
+                              <p class="trap-description">{{ trap.description }}</p>
+                            }
+                            <div class="trap-stats">
+                              @if (trap.trapType) {
+                                <span class="stat" [class]="getTrapTypeClass(trap.trapType)">{{ trap.trapType }}</span>
+                              }
+                              @if (trap.saveDC) {
+                                <span class="stat">Save DC: {{ trap.saveDC }} {{ trap.saveAbility }}</span>
+                              }
+                              @if (trap.damageDice) {
+                                <span class="stat">Damage: {{ trap.damageDice }} {{ trap.damageTypes.join(', ') }}</span>
+                              }
+                              @if (trap.disarmDC) {
+                                <span class="stat">Disarm DC: {{ trap.disarmDC }}</span>
+                              }
+                            </div>
+                            @if (trap.triggerDescription) {
+                              <p class="trap-trigger"><strong>Trigger:</strong> {{ trap.triggerDescription }}</p>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Creature Groups -->
+                @if (room.creatureGroups && room.creatureGroups.length > 0) {
+                  <div class="content-section">
+                    <h4 class="section-title">Variable Enemy Groups</h4>
+                    <div class="creature-groups-list">
+                      @for (group of room.creatureGroups; track group.name) {
+                        <div class="creature-group-item">
+                          <div class="creature-group-details">
+                            <strong class="creature-group-name">{{ group.name }}</strong>
+                            @if (group.quantityDice) {
+                              <span class="group-quantity">({{ group.quantityDice }})</span>
+                            } @else if (group.quantityMin && group.quantityMax) {
+                              <span class="group-quantity">({{ group.quantityMin }}-{{ group.quantityMax }})</span>
+                            }
+                            @if (group.description) {
+                              <p class="creature-group-description">{{ group.description }}</p>
+                            }
+                            @if (group.templateCreature) {
+                              <div class="template-creature">
+                                <span class="template-label">Template:</span>
+                                <strong>{{ group.templateCreature.name }}</strong>
+                                @if (group.templateCreature.type === 'monster' || group.templateCreature.type === 'npc') {
+                                  @if (group.templateCreature.statblock) {
+                                    <app-creature-statblock
+                                      [statblock]="group.templateCreature.statblock"
+                                      [creatureName]="group.templateCreature.name"
+                                      [hitPoints]="group.templateCreature.hitPoints"
+                                      [armorClass]="group.templateCreature.armorClass"
+                                      [alignment]="group.templateCreature.alignment"
+                                    />
+                                  }
                                 }
                               </div>
                             }

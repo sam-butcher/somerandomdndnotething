@@ -89,6 +89,42 @@
         </div>
       }
 
+      <!-- Traps in this container -->
+      @if (container.traps && container.traps.length > 0) {
+        <div class="content-section">
+          <h4 class="section-title">Traps</h4>
+          <div class="traps-list">
+            @for (trap of container.traps; track trap.name) {
+              <div class="trap-item">
+                <div class="trap-details">
+                  <strong class="trap-name">{{ trap.name }}</strong>
+                  @if (trap.description) {
+                    <p class="trap-description">{{ trap.description }}</p>
+                  }
+                  <div class="trap-stats">
+                    @if (trap.trapType) {
+                      <span class="stat" [class]="getTrapTypeClass(trap.trapType)">{{ trap.trapType }}</span>
+                    }
+                    @if (trap.saveDC) {
+                      <span class="stat">Save DC: {{ trap.saveDC }} {{ trap.saveAbility }}</span>
+                    }
+                    @if (trap.damageDice) {
+                      <span class="stat">Damage: {{ trap.damageDice }} {{ trap.damageTypes.join(', ') }}</span>
+                    }
+                    @if (trap.disarmDC) {
+                      <span class="stat">Disarm DC: {{ trap.disarmDC }}</span>
+                    }
+                  </div>
+                  @if (trap.triggerDescription) {
+                    <p class="trap-trigger"><strong>Trigger:</strong> {{ trap.triggerDescription }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Nested containers (RECURSIVE!) -->
       @if (container.containers && container.containers.length > 0) {
         <div class="content-section">

@@ -48,6 +48,21 @@ export enum CreatureType {
   UNDEAD = 'Undead'
 }
 
+export enum TrapType {
+  MECHANICAL = 'Mechanical',
+  MAGICAL = 'Magical',
+  HYBRID = 'Hybrid'
+}
+
+export enum SaveAbility {
+  STR = 'STR',
+  DEX = 'DEX',
+  CON = 'CON',
+  INT = 'INT',
+  WIS = 'WIS',
+  CHA = 'CHA'
+}
+
 export interface AbilityScores {
   strength: number;
   dexterity: number;
@@ -137,6 +152,7 @@ export interface DungeonGraph {
   name: string;
   description?: string;
   rooms: RoomData[];
+  randomEncounters?: RandomEncounterTable[];
 }
 
 export interface RoomData {
@@ -145,6 +161,8 @@ export interface RoomData {
   creatures?: CreatureData[];
   items?: ItemData[];
   containers?: ContainerData[];
+  traps?: TrapData[];
+  creatureGroups?: CreatureGroupData[];
 }
 
 // Discriminated union types matching backend sealed classes
@@ -209,4 +227,44 @@ export interface BoxContainer {
   items?: ItemData[];
   creatures?: CreatureData[];
   containers?: ContainerData[];
+  traps?: TrapData[];
+}
+
+export interface TrapData {
+  name: string;
+  description?: string;
+  trapType?: TrapType;
+  saveDC?: number;
+  saveAbility?: SaveAbility;
+  damageDice?: string;
+  damageTypes: string[];
+  triggerDescription?: string;
+  disarmDC?: number;
+}
+
+export interface CreatureGroupData {
+  name: string;
+  description?: string;
+  quantityMin?: number;
+  quantityMax?: number;
+  quantityDice?: string;
+  templateCreature?: CreatureData;
+}
+
+export interface RandomEncounterTable {
+  id: string;
+  name: string;
+  description?: string;
+  triggerCondition?: string;
+  encounters: EncounterEntryData[];
+}
+
+export interface EncounterEntryData {
+  encounterNumber: number;
+  name: string;
+  description?: string;
+  quantityMin?: number;
+  quantityMax?: number;
+  quantityDice?: string;
+  templateCreature?: CreatureData;
 }

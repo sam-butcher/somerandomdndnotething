@@ -13,6 +13,12 @@ import {
   Rarity,
   CreatureSize,
   CreatureType,
+  TrapData,
+  TrapType,
+  SaveAbility,
+  CreatureGroupData,
+  RandomEncounterTable,
+  EncounterEntryData,
 } from '../models/dungeon.models';
 import { QueryResponse } from '@typedb/driver-http';
 
@@ -58,8 +64,11 @@ export class TypeDBQueryService {
     // Query 2: Get all entity attributes and abilities in one query
     const entityDetails = await this.fetchAllEntityDetails(structure.entityIds);
 
+    // Query 3: Get random encounter tables for this dungeon
+    const randomEncounters = await this.fetchRandomEncounters(dungeonId, entityDetails);
+
     // Build the dungeon graph from structure and details
-    return this.buildDungeonFromStructure(structure, entityDetails);
+    return this.buildDungeonFromStructure(structure, entityDetails, randomEncounters);
   }
 
   /**
@@ -213,7 +222,8 @@ export class TypeDBQueryService {
       containmentEdges: ContainmentEdge[];
       entityIds: string[];
     },
-    entityDetails: Map<string, EntityAttributes>
+    entityDetails: Map<string, EntityAttributes>,
+    randomEncounters: RandomEncounterTable[]
   ): DungeonGraph {
     // Build containment map: container ID -> set of contained entity IDs
     const containmentMap = new Map<string, Set<string>>();
@@ -234,6 +244,7 @@ export class TypeDBQueryService {
       name: structure.dungeon.name,
       description: structure.dungeon.description,
       rooms,
+      randomEncounters: randomEncounters.length > 0 ? randomEncounters : undefined,
     };
   }
 
@@ -249,6 +260,8 @@ export class TypeDBQueryService {
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
+    const traps: TrapData[] = [];
+    const creatureGroups: CreatureGroupData[] = [];
 
     for (const entityId of contained) {
       const entityData = entityDetails.get(entityId);
@@ -270,15 +283,23 @@ export class TypeDBQueryService {
           entityDetails
         );
         if (container) containers.push(container);
+      } else if (entityType === 'trap') {
+        const trap = this.parseTrapFromEntity(entityData);
+        if (trap) traps.push(trap);
+      } else if (entityType === 'creature-group') {
+        const creatureGroup = this.parseCreatureGroupFromEntity(entityId, entityData, containmentMap, entityDetails);
+        if (creatureGroup) creatureGroups.push(creatureGroup);
       }
     }
 
     return {
       name: roomName,
       description: roomDescription,
-      creatures,
-      items,
-      containers,
+      creatures: creatures.length > 0 ? creatures : undefined,
+      items: items.length > 0 ? items : undefined,
+      containers: containers.length > 0 ? containers : undefined,
+      traps: traps.length > 0 ? traps : undefined,
+      creatureGroups: creatureGroups.length > 0 ? creatureGroups : undefined,
     };
   }
 
@@ -293,6 +314,7 @@ export class TypeDBQueryService {
     const creatures: CreatureData[] = [];
     const items: ItemData[] = [];
     const containers: ContainerData[] = [];
+    const traps: TrapData[] = [];
 
     for (const entityId of contained) {
       const entityData = entityDetails.get(entityId);
@@ -314,6 +336,9 @@ export class TypeDBQueryService {
           entityDetails
         );
         if (nestedContainer) containers.push(nestedContainer);
+      } else if (entityType === 'trap') {
+        const trap = this.parseTrapFromEntity(entityData);
+        if (trap) traps.push(trap);
       }
     }
 
@@ -321,9 +346,10 @@ export class TypeDBQueryService {
       type: 'box-container',
       name: containerData['name'] as string,
       description: containerData['description'] as string | undefined,
-      creatures,
-      items,
-      containers,
+      creatures: creatures.length > 0 ? creatures : undefined,
+      items: items.length > 0 ? items : undefined,
+      containers: containers.length > 0 ? containers : undefined,
+      traps: traps.length > 0 ? traps : undefined,
     };
   }
 
@@ -488,5 +514,137 @@ export class TypeDBQueryService {
       lairActions: abilityMap?.get('lair-action') || [],
       mythicActions: abilityMap?.get('mythic-action') || [],
     };
+  }
+
+  private parseTrapFromEntity(entity: EntityAttributes): TrapData | null {
+    const name = entity['name'] as string;
+    if (!name) return null;
+
+    const parseListAttribute = (key: string): string[] => {
+      const value = entity[key];
+      if (!value) return [];
+      return Array.isArray(value) ? value : [value];
+    };
+
+    return {
+      name,
+      description: entity['description'] as string | undefined,
+      trapType: entity['trap-type'] as TrapType | undefined,
+      saveDC: entity['save-dc'] as number | undefined,
+      saveAbility: entity['save-ability'] as SaveAbility | undefined,
+      damageDice: entity['damage-dice'] as string | undefined,
+      damageTypes: parseListAttribute('damage-type'),
+      triggerDescription: entity['trigger-description'] as string | undefined,
+      disarmDC: entity['disarm-dc'] as number | undefined,
+    };
+  }
+
+  private parseCreatureGroupFromEntity(
+    groupId: string,
+    entity: EntityAttributes,
+    containmentMap: Map<string, Set<string>>,
+    entityDetails: Map<string, EntityAttributes>
+  ): CreatureGroupData | null {
+    const name = entity['name'] as string;
+    if (!name) return null;
+
+    // Get the template creature via group-template relation
+    // The template creature should be linked to this group
+    let templateCreature: CreatureData | undefined;
+
+    // Look through the containmentMap or entity links to find the template
+    // In our schema, the group-template relation connects groups to creatures
+    // We need to fetch this separately or include it in the entity details
+    // For now, we'll leave it undefined and handle it in the query
+
+    return {
+      name,
+      description: entity['description'] as string | undefined,
+      quantityMin: entity['quantity-min'] as number | undefined,
+      quantityMax: entity['quantity-max'] as number | undefined,
+      quantityDice: entity['quantity-dice'] as string | undefined,
+      templateCreature,
+    };
+  }
+
+  /**
+   * Fetch random encounter tables for a dungeon
+   */
+  private async fetchRandomEncounters(
+    dungeonId: string,
+    entityDetails: Map<string, EntityAttributes>
+  ): Promise<RandomEncounterTable[]> {
+    const query = `
+      match
+        $dungeon isa dungeon, has id "${dungeonId}";
+        dungeon-encounters (dungeon: $dungeon, encounter-table: $table);
+      fetch {
+        "table": { $table.* },
+        "entries": [
+          match
+            has-encounter-entry (table: $table, entry: $entry);
+          fetch {
+            "entry": { $entry.* },
+            "templateCreature": [
+              match
+                group-template (group: $entry, template-creature: $creature);
+                $creature isa! $creature_type;
+              fetch {
+                "id": $creature.id,
+                "type": $creature_type
+              };
+            ]
+          };
+        ]
+      };
+    `;
+
+    return this.connectionService.executeReadQuery(query, (response) => {
+      if (response.answerType !== 'conceptDocuments' || response.answers.length === 0) {
+        return [];
+      }
+
+      const tables: RandomEncounterTable[] = [];
+
+      for (const result of response.answers as any[]) {
+        const tableData = result.table;
+        const entries: EncounterEntryData[] = [];
+
+        for (const entryResult of result.entries || []) {
+          const entryData = entryResult.entry;
+          let templateCreature: CreatureData | undefined;
+
+          // Get template creature from entity details if available
+          if (entryResult.templateCreature && entryResult.templateCreature.length > 0) {
+            const templateId = entryResult.templateCreature[0].id as string;
+            const templateEntityData = entityDetails.get(templateId);
+            if (templateEntityData) {
+              const creatureType = entryResult.templateCreature[0].type.label as string;
+              templateCreature = this.parseCreatureFromEntity(templateEntityData, creatureType) || undefined;
+            }
+          }
+
+          entries.push({
+            encounterNumber: entryData['encounter-number'] as number,
+            name: entryData['name'] as string,
+            description: entryData['description'] as string | undefined,
+            quantityMin: entryData['quantity-min'] as number | undefined,
+            quantityMax: entryData['quantity-max'] as number | undefined,
+            quantityDice: entryData['quantity-dice'] as string | undefined,
+            templateCreature,
+          });
+        }
+
+        tables.push({
+          id: tableData['id'] as string,
+          name: tableData['name'] as string,
+          description: tableData['description'] as string | undefined,
+          triggerCondition: tableData['trigger-condition'] as string | undefined,
+          encounters: entries,
+        });
+      }
+
+      return tables;
+    });
   }
 }
